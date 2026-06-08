@@ -106,8 +106,9 @@ esqueleto executavel do servico.
 2. Verificar se `plan-<MODULO>.md` + issues ja existem.
    - Se existem: pular para A4.
 3. Executar protocolo de `.claude/commands/be-architect-backlog.md` com `<MODULO>`.
-4. Checkpoint (`currentStep: "backlog"`, `nextStep: "scaffold"`).
-5. Prosseguir para A4.
+4. Issues criadas com `## Status: Backlog`. Prioridades do plano com `Status: Backlog`.
+5. Checkpoint (`currentStep: "backlog"`, `nextStep: "scaffold"`).
+6. Prosseguir para A4.
 
 ### Etapa A4 -- Scaffold
 
@@ -139,9 +140,11 @@ fechar ou o safety cap ser atingido.
    - Consolidar estado real de cada item do checklist do modulo.
    - Calcular score de maturidade (0-100).
    - Atualizar o plano/issues com bloco de status.
-2. Se score >= 80 e checklist 100% DONE: ir para Finalizacao.
-3. Checkpoint (`currentStep: "baseline"`, `nextStep: "decision"`, notes com score e done/total).
-4. Prosseguir para B2.
+2. Identificar a prioridade alvo (primeira nao-Done no plano). Setar `## Status: Ready`
+   nas issues dessa prioridade e `Status: Ready` na prioridade do plano.
+3. Se score >= 80 e checklist 100% DONE: ir para Finalizacao.
+4. Checkpoint (`currentStep: "baseline"`, `nextStep: "decision"`, notes com score e done/total).
+5. Prosseguir para B2.
 
 ### Etapa B2 -- Decisao (Validator Modo 2)
 
@@ -161,11 +164,15 @@ fechar ou o safety cap ser atingido.
 
 ### Etapa B4 -- Implement (uma prioridade por vez)
 
-1. Executar protocolo de `.claude/commands/be-implement.md` com `<MODULO> <PRIORIDADE>`.
+1. Setar `## Status: In Progress` nas issues da prioridade alvo e `Status: In Progress`
+   na prioridade do plano.
+2. Executar protocolo de `.claude/commands/be-implement.md` com `<MODULO> <PRIORIDADE>`.
    - Implementar **uma unica prioridade**, seguindo exatamente a ordem das fases do plano.
-2. Seguir a verificacao local prevista no be-implement (o be-implement **NAO** roda `./gradlew`).
-3. Checkpoint (`currentStep: "implement"`, `nextStep: "validate"`, `prioridade: "<P>"`).
-4. Prosseguir para B5.
+3. Seguir a verificacao local prevista no be-implement (o be-implement **NAO** roda `./gradlew`).
+4. Setar `## Status: In Review` nas issues da prioridade alvo e `Status: In Review`
+   na prioridade do plano.
+5. Checkpoint (`currentStep: "implement"`, `nextStep: "validate"`, `prioridade: "<P>"`).
+6. Prosseguir para B5.
 
 ### Etapa B5 -- Validacao (Validator Modo 3)
 
@@ -173,13 +180,17 @@ fechar ou o safety cap ser atingido.
    - Gates de build/teste do servico.
    - Conformidade arquitetural (hexagonal + enforcement multi-empresa).
    - Atualizar checklist + bloco de status.
-2. Se gates passam E score >= 80 E checklist 100% DONE: ir para Finalizacao.
+2. Se gates passam E score >= 80 E checklist 100% DONE:
+   - Setar `## Status: Done` nas issues da prioridade alvo e `Status: Done` na prioridade do plano.
+   - Ir para Finalizacao.
 3. Se gates passam mas checklist incompleto:
+   - Setar `## Status: Ready` nas issues da prioridade alvo (volta para fila).
    - Incrementar `iteration`.
    - Se `iteration` > 5: parar com safety cap (ver abaixo).
    - Checkpoint (`currentStep: "validate-partial"`, `nextStep: "decision"`).
    - Voltar para B2 (Decisao) e prosseguir automaticamente (proxima prioridade).
 4. Se gates falham:
+   - Setar `## Status: In Progress` nas issues da prioridade alvo (retorna para correcao).
    - Checkpoint (`currentStep: "validate-failed"`, `nextStep: "decision"`, notes com erro).
    - Voltar para B2 (Decisao) com o diagnostico do erro e prosseguir automaticamente.
 

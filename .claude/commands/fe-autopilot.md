@@ -129,10 +129,13 @@ ID derivado: `<MODULO>-<feature-slug>` (ex.: `<MODULE>-cadastro-cliente`).
 
 ### Finalizacao Pipeline A
 
+Ao concluir o scaffold, setar `status: "Ready"` (YAML frontmatter) e `**Status:** Ready`
+(body) em todas as issues geradas na Pipeline A. Elas estao prontas para implementacao.
+
 ```
 Pipeline Architect concluido para <MODULO>/<feature-slug>
 Etapas executadas: [from-prototype ->] discover -> spec-delta -> backlog -> scaffold
-Issues geradas: <lista <MODULO>-FE-NNN..NNN+K>
+Issues geradas: <lista <MODULO>-FE-NNN..NNN+K> [status: Ready]
 
 Para comecar a implementar a primeira issue:
 -> /fe-autopilot <MODULO>-FE-NNN
@@ -151,9 +154,11 @@ Input: `<ISSUE_ID>` (ex.: `<MODULE>-FE-007`).
    - Consolidar estado real de cada item do checklist.
    - Calcular score de maturidade.
    - Atualizar a issue com bloco de status.
-2. Se score >= 80 e checklist 100% DONE: ir para Finalizacao.
-3. Checkpoint (`currentStep: "baseline"`, `nextStep: "decision"`, notes com score e done/total).
-4. Prosseguir para B2.
+2. Confirmar que a issue esta em `status: "Backlog"` ou `status: "Ready"`. Se necessario,
+   setar `status: "Ready"` (YAML) e `**Status:** Ready` (body).
+3. Se score >= 80 e checklist 100% DONE: ir para Finalizacao.
+4. Checkpoint (`currentStep: "baseline"`, `nextStep: "decision"`, notes com score e done/total).
+5. Prosseguir para B2.
 
 ### Etapa B2 -- Decisao (Validator Modo 2)
 
@@ -173,10 +178,12 @@ Input: `<ISSUE_ID>` (ex.: `<MODULE>-FE-007`).
 
 ### Etapa B4 -- Implement
 
-1. Executar protocolo de `.claude/commands/fe-implement.md` para a fase atual.
-2. Executar verificacao local (build + lint, conforme Etapa 4 do fe-implement).
-3. Checkpoint (`currentStep: "implement"`, `nextStep: "validate"`, `fase: <N>`).
-4. Prosseguir para B5.
+1. Setar `status: "In Progress"` (YAML) e `**Status:** In Progress` (body) na issue.
+2. Executar protocolo de `.claude/commands/fe-implement.md` para a fase atual.
+3. Executar verificacao local (build + lint, conforme Etapa 4 do fe-implement).
+4. Setar `status: "In Review"` (YAML) e `**Status:** In Review` (body) na issue.
+5. Checkpoint (`currentStep: "implement"`, `nextStep: "validate"`, `fase: <N>`).
+6. Prosseguir para B5.
 
 ### Etapa B5 -- Validacao (Validator Modo 3)
 
@@ -184,13 +191,17 @@ Input: `<ISSUE_ID>` (ex.: `<MODULE>-FE-007`).
    - Gates: `nx lint`, `nx test`, `nx build`.
    - Verificar conformidade arquitetural (incluindo multi-empresa enforcement).
    - Atualizar issue (checklist + bloco de status).
-2. Se gates passam E score >= 80 E checklist 100% DONE: ir para Finalizacao.
+2. Se gates passam E score >= 80 E checklist 100% DONE:
+   - Setar `status: "Done"` (YAML) e `**Status:** Done` (body) na issue.
+   - Ir para Finalizacao.
 3. Se gates passam mas checklist incompleto:
+   - Setar `status: "Ready"` (YAML) e `**Status:** Ready` (body) na issue (volta para fila).
    - Incrementar iteration.
    - Se iteration > 5: parar com safety cap (ver abaixo).
    - Checkpoint (`currentStep: "validate-partial"`, `nextStep: "decision"`).
    - Voltar para B2 (Decisao) e prosseguir automaticamente.
 4. Se gates falham:
+   - Setar `status: "In Progress"` (YAML) e `**Status:** In Progress` (body) na issue (retorna para correcao).
    - Checkpoint (`currentStep: "validate-failed"`, `nextStep: "decision"`, notes com erro).
    - Voltar para B2 (Decisao) com diagnostico do erro e prosseguir automaticamente.
 
