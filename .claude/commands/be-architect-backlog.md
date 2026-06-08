@@ -110,12 +110,7 @@ S | M | L
 
 ## Prioridade
 P1..P9
-
-## Status
-Backlog
 ```
-
-Valores validos de `## Status`: `Backlog` | `Ready` | `In Progress` | `In Review` | `Done`
 
 Issues `INT-<PREFIX>-NNN` seguem o mesmo template, mas o **Spec de referencia** sempre inclui
 `integration-contracts.md` ou `hub-integration.md`.
@@ -131,8 +126,8 @@ Mesmo formato do `be-planner`, mas alimentado pelos artefatos arquiteturais
 # Plano -- <PREFIX> (<tool-name>)
 
 ## Status das prioridades
-- P1 -- Backlog
-- P2 -- Backlog
+- P1 -- pendente
+- P2 -- pendente
 - ...
 
 ## 0. Leitura executiva
@@ -147,7 +142,7 @@ Mesmo formato do `be-planner`, mas alimentado pelos artefatos arquiteturais
 ## 2. Plano por prioridade
 
 ### Prioridade N -- <titulo>
-Status: Backlog
+Status: pendente
 
 #### Objetivo / Resultado esperado
 #### Issues vinculadas

@@ -82,14 +82,14 @@ feature: "feat: <feature-slug>"
 priority: "priority: P<N>"
 size: "size: <s|m|l>"
 milestone: "Wave <N> -- <descricao>"
-status: "Backlog"
+status: "planned"
 depends_on: [<MODULO>-FE-NNN, ...]
 be_dependency: ""   # ex.: <MODULO>-NNN (issue BE que entrega o endpoint)
 ---
 
 ## [<MODULO>-FE-NNN] <titulo curto>
 
-**Status:** Backlog
+**Status:** 🔲 ABERTA
 **Feature:** `<feature-slug>` (modulo `<MODULO>`)
 
 **Outcome:** <O que fica entregue ao final, user-facing ou code-base.>
