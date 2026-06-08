@@ -26,3 +26,16 @@ __pycache__/
 node_modules/
 dist/
 .nx/
+
+# AI pipeline internals (kept locally, not exposed to devs)
+.claude/
+templates/
+arch/
+_inbox/
+scripts/pipeline/
+CLAUDE.md
+project-context.json
+project-journal.md
+project-checklist.md
+architecture.lock
+tmp/
