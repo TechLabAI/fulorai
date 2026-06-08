@@ -1,0 +1,103 @@
+# generator-config.yml — contract for scripts/be-module-generator.py
+# Module: WRKS · Service: wrks-service  (be-architect-scaffold)
+#
+# WRKS is the foundation IAM service (type=standard): owns identity, RBAC and the IAM
+# subset of journeyos_global; issues JWT + AccessDecision; orchestrates tenant provisioning.
+# Every field below is traceable to contracts/specs.
+# NOTE: list items carry NO inline "# comments" — the generator embeds raw item text into
+# generated class/file names, so inline comments would corrupt them. Annotations are kept on
+# their own comment lines only.
+
+service: wrks-service
+type: standard
+port: 8081
+# bounded_context drives the base package: com.journeyos.<bounded_context> (RULE-09).
+bounded_context: wrks
+# issue_prefix pinned (issues live in a shared GLOBAL dir; auto-scan would be ambiguous).
+issue_prefix: WRKS
+
+# ---- Domain (data-model.md §3) ----
+# aggregates = root tables (empresa, usuario, papel, permissao, modelo_acesso_versao, evento_auditoria)
+# entities   = child/join tables (business_unit, team, usuario_team, papel_permissao, usuario_empresa)
+domain:
+  aggregates:
+    - Empresa
+    - Usuario
+    - Papel
+    - Permissao
+    - ModeloAcessoVersao
+    - EventoAuditoria
+  entities:
+    - BusinessUnit
+    - Team
+    - UsuarioTeam
+    - PapelPermissao
+    - UsuarioEmpresa
+
+# ---- Application services (api-contract.md) ----
+application_services:
+  - name: SessaoService
+    operations: [login, trocarEmpresa, refresh, logout, restore]
+  - name: AccessService
+    operations: [evaluate, jwks]
+  - name: EmpresaService
+    operations: [create, findById, listAll, update, provisionar]
+  - name: UsuarioService
+    operations: [create, findById, listAll, update, delete, associar]
+  - name: PapelService
+    operations: [listAll, findPermissoes, updatePermissoes]
+  - name: BusinessUnitService
+    operations: [create, findById, listAll, update]
+  - name: TeamService
+    operations: [create, findById, listAll, update]
+  - name: AuditoriaService
+    operations: [listAll]
+
+# ---- Enums (data-model.md CHECK / canonical roles) ----
+enums:
+  EmpresaStatus: [PROVISIONANDO, ATIVA, INATIVA]
+  PapelCanonico: [INFOPRODUTOR, HEAD_GROWTH, SDR]
+
+# ---- Feign clients (hub-integration.md §3) ----
+feign_clients:
+  - name: MigrationTriggerClient
+    service: journey-os-migrations
+    url_prop: journey-os.mig.url
+
+# ---- Consumed events (event-contracts.md §2): all platform events -> consolidated audit ----
+consumed_events:
+  - event: journey-os.*
+    destination: journey-os.audit
+    consumer_class: AuditoriaEventConsumer
+
+# ---- Published events (event-contracts.md §1) ----
+events:
+  published:
+    - com.journeyos.wrks.event.ModeloAcessoAlterado
+    - com.journeyos.wrks.event.UsuarioCriado
+    - com.journeyos.wrks.event.UsuarioEmpresaAssociado
+    - com.journeyos.wrks.event.EmpresaProvisionada
+    - com.journeyos.wrks.event.SessaoEstabelecida
+    - com.journeyos.wrks.event.SessaoEncerrada
+
+# ---- Outbound ports beyond *RepositoryPort ----
+# TokenIssuer=JWT RS256 (ADR-005); SessionCache/AccessDecisionCache/Blacklist=Redis;
+# Idp=Keycloak OIDC; MigrationTrigger=MIG; EventPublisher=Kafka outbox; AuditIndex=Elastic.
+outbound_ports:
+  - TokenIssuerPort
+  - SessionCachePort
+  - AccessDecisionCachePort
+  - BlacklistPort
+  - IdpPort
+  - MigrationTriggerPort
+  - EventPublisherPort
+  - AuditIndexPort
+
+# ---- Extra dependencies (beyond default web/jpa/test stack) ----
+extra_dependencies:
+  - "org.springframework.boot:spring-boot-starter-data-redis"
+  - "org.springframework.boot:spring-boot-starter-oauth2-client"
+  - "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
+  - "org.springframework.kafka:spring-kafka"
+  - "io.github.resilience4j:resilience4j-spring-boot3"
+  - "org.springframework.security:spring-security-test"

@@ -1,0 +1,36 @@
+@startuml c4-container-intl
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title INTL (intl-service) — C4 Container
+
+Person(user, "Usuário", "Infoprodutor / Head Growth / SDR")
+System_Ext(gwy, "API Gateway (GWY)")
+
+System_Boundary(intl, "intl-service (com.journeyos.intl, :8087)") {
+  Container(api, "API Layer", "Spring MVC", "CopilotController, KnowledgeController, AnalyticsController")
+  Container(app, "Application Layer", "Spring @Service", "CopilotService, KnowledgeIngestService, EventPlatformService, AnalyticsService")
+  Container(domain, "Domain Layer", "POJO puro", "ConversaCopiloto, NoConhecimento, Citacao, TraceabilityValidator")
+  Container(infra, "Infrastructure Layer", "Adapters", "JPA, TechLabAiClient, Elastic adapter, Kafka consumers/producer, Security")
+}
+
+ContainerDb(pg, "PostgreSQL + pgVector", "emp_<slug>", "conhecimento + conversas")
+System_Ext(es, "Elasticsearch", "ai-copilot-events, knowledge-nodes, facts (read)")
+System_Ext(techlab, "TechLab AI", "knowledge + orchestration")
+System_Ext(wrks, "WRKS", "AccessDecision + JWKS")
+System_Ext(asst, "ASST", "AssetQueryClient")
+System_Ext(kafka, "Kafka / AWS MSK")
+System_Ext(reg, "Eureka (REG)")
+
+Rel(user, gwy, "HTTPS")
+Rel(gwy, api, "JWT")
+Rel(api, app, "use cases")
+Rel(app, domain, "regras")
+Rel(app, infra, "ports out")
+Rel(infra, pg, "JPA (validate)", "JDBC")
+Rel(infra, es, "SearchPort/IndexPort", "HTTP")
+Rel(infra, techlab, "RAG", "HTTP")
+Rel(infra, wrks, "AccessDecision", "Feign")
+Rel(infra, asst, "asset content", "Feign")
+Rel(infra, kafka, "consume/produce", "Kafka")
+Rel(infra, reg, "discovery", "HTTP")
+@enduml

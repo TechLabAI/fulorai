@@ -1,0 +1,20 @@
+{
+  "name": "wrks-feature-workspace",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/wrks/feature-workspace/src",
+  "prefix": "jos",
+  "projectType": "library",
+  "tags": ["scope:wrks", "type:feature"],
+  "targets": {
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/wrks/feature-workspace/jest.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

@@ -1,0 +1,110 @@
+# generator-config.yml — contract for scripts/be-module-generator.py
+# Module: JRNY · Service: jrny-service  (be-architect-scaffold)
+#
+# JRNY is Journey & Routing (type=standard): owns journey definition (Journey Builder),
+# the deterministic Routing Engine (versioned rules + optional TechLab AI orchestration assist
+# with fallback) and the immutable decision log. Operates only in the tenant schema emp_<slug>.
+# Every field below is traceable to contracts/specs.
+# NOTE: list items carry NO inline "# comments" — the generator embeds raw item text into
+# generated class/file names, so inline comments would corrupt them. Annotations are kept on
+# their own comment lines only.
+
+service: jrny-service
+type: standard
+port: 8084
+# bounded_context drives the base package: com.journeyos.<bounded_context> (RULE-09).
+bounded_context: jrny
+# issue_prefix pinned (issues live in a shared GLOBAL dir; auto-scan would be ambiguous).
+issue_prefix: JRNY
+
+# ---- Domain (data-model.md §3) ----
+# aggregates = independent roots: Jornada (definition lifecycle) and InscricaoJornada
+#   (lead-execution lifecycle, driven by consumed LEAD events).
+# entities   = Estagio + RegraRoteamento (children of Jornada) and DecisaoRoteamento
+#   (immutable decision log, child of InscricaoJornada).
+domain:
+  aggregates:
+    - Jornada
+    - InscricaoJornada
+  entities:
+    - Estagio
+    - RegraRoteamento
+    - DecisaoRoteamento
+
+# ---- Application services (api-contract.md + SPEC-02 routing engine) ----
+application_services:
+  - name: JornadaService
+    operations: [create, findById, listAll, update, publicar, arquivar, novaVersao]
+  - name: EstagioService
+    operations: [create, update, listByJornada]
+  - name: RegraRoteamentoService
+    operations: [create, update, listByJornada]
+  - name: RotearLeadService
+    operations: [rotear, avancarEstagio]
+  - name: RoteamentoQueryService
+    operations: [findLeadJourney, listLeadDecisions]
+
+# ---- Enums (data-model.md CHECK constraints) ----
+enums:
+  EstadoJornada: [RASCUNHO, PUBLICADA, ARQUIVADA]
+  TipoEstagio: [CAPTURA, NUTRICAO, QUALIFICACAO, OFERTA, FECHAMENTO, POS_VENDA]
+  EstadoInscricao: [ATIVA, CONCLUIDA, ENCERRADA]
+  AssistIa: [USADO, IGNORADO, INDISPONIVEL]
+  ResultadoRoteamento: [ROTEADO, SEM_MUDANCA, NAO_ROTEADO]
+
+# ---- Feign clients (hub-integration.md) ----
+feign_clients:
+  - name: AccessEvaluateClient
+    service: wrks-service
+    url_prop: journey-os.wrks.url
+  - name: AssetQueryClient
+    service: asst-service
+    url_prop: journey-os.asst.url
+
+# ---- Consumed events (event-contracts.md §2) ----
+consumed_events:
+  - event: journey-os.lead.qualificado
+    destination: journey-os.lead.qualificado
+    consumer_class: LeadQualificadoConsumer
+  - event: journey-os.lead.score.atualizado
+    destination: journey-os.lead.score.atualizado
+    consumer_class: LeadScoreAtualizadoConsumer
+  - event: journey-os.lead.segmento.alterado
+    destination: journey-os.lead.segmento.alterado
+    consumer_class: LeadSegmentoAlteradoConsumer
+  - event: journey-os.asset.versao.publicada
+    destination: journey-os.asset.versao.publicada
+    consumer_class: AssetVersaoPublicadaConsumer
+  - event: journey-os.modelo.acesso.alterado
+    destination: journey-os.modelo.acesso.alterado
+    consumer_class: ModeloAcessoAlteradoConsumer
+  - event: journey-os.empresa.provisionada
+    destination: journey-os.empresa.provisionada
+    consumer_class: EmpresaProvisionadaConsumer
+
+# ---- Published events (event-contracts.md §1) ----
+events:
+  published:
+    - com.journeyos.jrny.event.JornadaPublicada
+    - com.journeyos.jrny.event.LeadRoteado
+    - com.journeyos.jrny.event.EstagioTransicionado
+    - com.journeyos.jrny.event.JornadaConcluida
+
+# ---- Outbound ports beyond *RepositoryPort ----
+# RecomendacaoIaPort=TechLab AI orchestration (HTTP, optional + fallback); AssetQueryPort=ASST
+# published-asset reads; AccessDecisionPort=WRKS; EventPublisherPort=Kafka outbox;
+# JourneyEventIndexPort=Elastic journey-events + routing-decisions (fact, best-effort).
+outbound_ports:
+  - RecomendacaoIaPort
+  - AssetQueryPort
+  - AccessDecisionPort
+  - EventPublisherPort
+  - JourneyEventIndexPort
+
+# ---- Extra dependencies (beyond default web/jpa/test stack) ----
+extra_dependencies:
+  - "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
+  - "org.springframework.kafka:spring-kafka"
+  - "co.elastic.clients:elasticsearch-java"
+  - "io.github.resilience4j:resilience4j-spring-boot3"
+  - "org.springframework.security:spring-security-test"

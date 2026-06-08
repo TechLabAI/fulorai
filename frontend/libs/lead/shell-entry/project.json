@@ -1,0 +1,20 @@
+{
+  "name": "lead-shell-entry",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/lead/shell-entry/src",
+  "prefix": "jos",
+  "projectType": "library",
+  "tags": ["scope:lead", "type:app"],
+  "targets": {
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/lead/shell-entry/jest.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

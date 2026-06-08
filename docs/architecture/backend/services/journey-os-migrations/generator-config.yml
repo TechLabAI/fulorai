@@ -1,0 +1,38 @@
+# generator-config.yml — contract for scripts/be-module-generator.py
+# Module: MIG · Service: journey-os-migrations
+#
+# NOTE on `type`: MIG is the centralized Flyway runner. The generator only accepts
+# standard|gateway|registry. We choose `standard` (NOT gateway/registry) on purpose:
+# only `standard` chains be-migration-generator.py, which extracts the bootstrap DDL
+# (extensions) from contracts/data-model.md into the initial Flyway migration and
+# scaffolds db/migration/. The domain blocks are intentionally EMPTY — MIG owns no
+# business aggregates/entities/events/clients. See plan-MIG.md and ADR-002.
+
+service: journey-os-migrations
+type: standard
+port: 8079
+# bounded_context drives the base package suffix: com.journeyos.<bounded_context>.
+# Required because the service name does not end in "-service", otherwise the generator
+# squashes it (→ com.journeyos.journeyosmigrations), violating RULE-09 (canonical
+# package com.journeyos.mig).
+bounded_context: mig
+# issue_prefix must be explicit: issues live in a shared GLOBAL dir, so auto-scan is
+# ambiguous (would pick up GWY/REG/etc.). Pin it to MIG.
+issue_prefix: MIG
+
+domain:
+  aggregates: []          # MIG owns no business aggregates (data-model.md §2)
+  entities: []            # none
+
+application_services: []  # no business API (api-contract.md §1: actuator only)
+
+enums: {}                 # none
+
+feign_clients: []         # no runtime service calls (hub-integration.md)
+
+consumed_events: []       # consumes no platform events (event-contracts.md)
+
+events:
+  published: []           # publishes no platform events (event-contracts.md)
+
+outbound_ports: []        # none beyond Flyway/DataSource infra config

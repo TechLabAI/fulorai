@@ -1,0 +1,38 @@
+@startuml lead-c4-component
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+title LEAD — Components (hexagonal, com.journeyos.lead)
+
+Container_Boundary(api, "api") {
+  Component(ctrl, "LeadController / SurveyController / QualificationController / SegmentController", "@RestController", "DTO records")
+  Component(advice, "ApiExceptionHandler", "@RestControllerAdvice", "ProblemDetail RFC 7807")
+}
+
+Container_Boundary(app, "application") {
+  Component(uc, "LeadService / QualificationService / SegmentService", "@Service @Transactional", "orquestra golden path")
+  Component(portin, "port.in (use cases)", "interfaces", "")
+  Component(portout, "port.out", "interfaces", "LeadRepositoryPort, RegraRepositoryPort, TechLabQualificationPort, LeadSearchPort, LeadEventPublisherPort")
+}
+
+Container_Boundary(domain, "domain") {
+  Component(model, "model", "POJO", "Lead, PerfilLead, MaturityScore, RegraQualificacao, Segmento")
+  Component(dsvc, "service", "POJO", "MaturityScoreCalculator, QualificationRuleEngine, SegmentEvaluator")
+}
+
+Container_Boundary(infra, "infrastructure") {
+  Component(persist, "persistence", "entity/repository/adapter", "PostgreSQL emp_<slug>")
+  Component(msg, "messaging", "producer/consumer", "Kafka lead.* + WRKS events")
+  Component(clients, "clients", "@FeignClient + HTTP", "AccessEvaluateClient (WRKS), TechLabAiClient")
+  Component(search, "search", "adapter", "Elasticsearch leads")
+  Component(sec, "security/config", "filters + DomainServiceConfig", "JWT, EmpresaContextHolder, Resilience4j")
+}
+
+Rel(ctrl, uc, "chama")
+Rel(uc, portin, "implementa")
+Rel(uc, dsvc, "usa regras")
+Rel(uc, portout, "depende de")
+Rel(persist, portout, "implementa LeadRepositoryPort/RegraRepositoryPort")
+Rel(search, portout, "implementa LeadSearchPort")
+Rel(msg, portout, "implementa LeadEventPublisherPort")
+Rel(clients, portout, "implementa TechLabQualificationPort")
+Rel(dsvc, model, "opera sobre")
+@enduml

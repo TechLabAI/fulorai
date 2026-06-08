@@ -1,0 +1,122 @@
+# Generator config — LEAD (Frontend) · input do @journeyos internal:module (scaffold A4)
+# Fonte: SPEC-01..08 + _brief.md. Naming canônico module-pattern; npmScope @journeyos.
+module: lead
+issue_prefix: FE-LEAD
+nx_scope: lead
+npm_scope: "@journeyos"
+shell_route: /lead
+type: standard
+state_management: signals
+foundation: false   # LEAD é módulo de domínio; depende de WRKS (auth) + Access Layer
+
+features:
+  - name: lead-list
+    lib: feature-lead-list
+    routes: [/lead/leads]
+    components: [LeadListPageComponent, LeadFilterBarComponent, LeadRowComponent]
+    permission: lead.lead.read
+  - name: lead-detail
+    lib: feature-lead-detail
+    routes: [/lead/leads/:id]
+    components: [LeadDetailPageComponent, LeadProfilePanelComponent, ScoreBreakdownComponent, LeadActionsBarComponent]
+    permission: lead.lead.read
+  - name: maturity-score
+    lib: feature-maturity-score
+    routes: [/lead/maturity]
+    components: [MaturityDashboardPageComponent, ScoreRadarComponent, MaturityDistributionChartComponent]
+    permission: lead.lead.read
+  - name: segmentation
+    lib: feature-segmentation
+    routes: [/lead/segments]
+    components: [SegmentListPageComponent, SegmentEditorDialogComponent]
+    permission: lead.segment.read
+  - name: survey
+    lib: feature-survey
+    routes: [/lead/surveys]
+    components: [SurveyListPageComponent, SurveyEditorPageComponent, SurveyAnswerDialogComponent]
+    permission: lead.survey.read
+  - name: qualification-rules
+    lib: feature-qualification-rules
+    routes: [/lead/qualification]
+    components: [QualificationRulesPageComponent, RuleVersionEditorDialogComponent]
+    permission: lead.qualification.read
+
+data_access:
+  - resource: Lead
+    base_path: /api/v1/leads
+    service: LeadApiService
+    facade: LeadListFacade
+    operations: [list, get, update, qualify, anonimizar, expurgar]
+  - resource: Survey
+    base_path: /api/v1/surveys
+    service: SurveyApiService
+    facade: SurveyFacade
+    operations: [list, get, create, update, responder]
+  - resource: QualificationRule
+    base_path: /api/v1/qualification/rules
+    service: QualificationApiService
+    facade: QualificationFacade
+    operations: [list, create, activate]
+  - resource: Segment
+    base_path: /api/v1/segments
+    service: SegmentApiService
+    facade: SegmentFacade
+    operations: [list, get, create, update, delete, listLeads]
+
+backend_contract: ../../../../backend/services/lead-service/contracts/api-contract.md
+
+ui_libs_used:
+  - "@journeyos/shared/ui-tokens"
+  - "@journeyos/shared/ui-components"
+  - "@journeyos/shared/ui-feedback"
+
+access_libs_used:
+  - "@journeyos/shared/auth-session"
+  - "@journeyos/shared/empresa-context"
+  - "@journeyos/shared/access-decision"
+  - "@journeyos/shared/access-http-base"
+  - "@journeyos/shared/error-model"
+
+optional_libs:
+  - "@journeyos/shared/observability"
+
+extra_dependencies: []
+
+module_contract:
+  key: lead
+  label: Leads
+  icon: groups
+  permissions:
+    - lead.lead.read
+    - lead.lead.criar
+    - lead.lead.editar
+    - lead.lead.anonimizar
+    - lead.lead.expurgar
+    - lead.survey.read
+    - lead.survey.criar
+    - lead.survey.editar
+    - lead.survey.responder
+    - lead.qualification.read
+    - lead.qualification.criar
+    - lead.qualification.ativar
+    - lead.qualification.executar
+    - lead.segment.read
+    - lead.segment.criar
+    - lead.segment.editar
+    - lead.segment.excluir
+  feature_flags:
+    - { key: lead.maturity-score, defaultState: enabled }
+    - { key: lead.qualification-rules, defaultState: enabled }
+
+e2e:
+  features_path: docs/architecture/frontend/modules/lead/frontend/e2e/
+  features:
+    - lead-qualification.feature
+    - maturity-score-degradation.feature
+    - segmentation.feature
+    - qualification-rules.feature
+    - survey-capture.feature
+    - lgpd-anonymization.feature
+    - empresa-switch-isolation.feature
+    - entitlement-denied.feature
+    - deep-link.feature

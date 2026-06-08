@@ -1,0 +1,25 @@
+@startuml c4-container-reg
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Container — REG (journey-os-service-registry)
+
+System_Boundary(reg, "journey-os-service-registry") {
+  Container(eureka, "Eureka Server", "Java 21 / Spring Boot 3.5 / Spring Cloud Netflix", "@EnableEurekaServer — in-memory registry on port 8761")
+  Container(actuator, "Actuator", "Spring Boot Actuator", "GET /actuator/health, /actuator/info")
+  Container(dashboard, "Eureka Dashboard", "Server-rendered UI", "GET / — UP/DOWN view")
+}
+
+Container_Ext(client, "Eureka Client (any service)", "Spring Cloud Netflix Eureka Client", "register + heartbeat + fetch")
+Container_Ext(gwy, "API Gateway (GWY)", "Spring Cloud Gateway", "resolves routes via registry")
+
+Rel(client, eureka, "POST/PUT/DELETE /eureka/apps/*", "HTTP")
+Rel(gwy, eureka, "GET /eureka/apps", "HTTP")
+Rel_Neighbor(eureka, dashboard, "renders")
+Rel_Neighbor(eureka, actuator, "reports status")
+
+note bottom of eureka
+  No DataStore container: registry is in-memory & volatile.
+  No messaging container: REG produces/consumes no events.
+end note
+
+@enduml

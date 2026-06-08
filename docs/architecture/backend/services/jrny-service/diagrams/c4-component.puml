@@ -1,0 +1,59 @@
+@startuml jrny-c4-component
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+title JRNY — Components (hexagonal layers)
+
+Container_Boundary(api, "api") {
+  Component(ctrlJornada, "JourneyController", "@RestController", "CRUD jornada/estágio + publicar/arquivar /api/v1/journeys")
+  Component(ctrlRegra, "RoutingRuleController", "@RestController", "CRUD regra_roteamento /api/v1/routing/rules")
+  Component(ctrlQuery, "RoutingQueryController", "@RestController", "estado de jornada + decision log /api/v1/routing/leads")
+  Component(advice, "ApiExceptionHandler", "@RestControllerAdvice", "ProblemDetail RFC7807")
+}
+
+Container_Boundary(app, "application") {
+  Component(ucCriar, "CriarJornadaService", "@Service @Transactional", "")
+  Component(ucPublicar, "PublicarJornadaService", "@Service @Transactional", "state machine RASCUNHO→PUBLICADA→ARQUIVADA")
+  Component(ucRegra, "DefinirRegraService", "@Service @Transactional", "")
+  Component(ucRotear, "RotearLeadService", "@Service @Transactional", "gatilho de evento → decisão")
+  Component(ucAvancar, "AvancarEstagioService", "@Service @Transactional", "")
+  Component(ucConsultar, "ConsultarJornadaDoLeadService", "@Service", "")
+  Component(portsOut, "Ports OUT", "interfaces", "JornadaRepositoryPort, InscricaoRepositoryPort, DecisaoRepositoryPort, RecomendacaoIaPort, AssetQueryPort, AccessDecisionPort, EventoPublisherPort, JourneyEventIndexPort")
+}
+
+Container_Boundary(domain, "domain") {
+  Component(mJornada, "Jornada / Estagio / RegraRoteamento", "POJO", "definição versionada")
+  Component(mInscricao, "InscricaoJornada / DecisaoRoteamento", "POJO", "estado de execução + decision log")
+  Component(sMotor, "MotorRoteamento", "domain service", "avaliação determinística ordenada por prioridade + fold do assist")
+  Component(sAvaliador, "AvaliadorCondicao", "domain service", "predicado puro sobre o snapshot do lead")
+  Component(sTransicao, "TransicaoEstagioService", "domain service", "state machine de inscrição")
+}
+
+Container_Boundary(infra, "infrastructure") {
+  Component(jpa, "JPA adapters", "persistence", "entity/repository/adapter (emp_<slug>)")
+  Component(feignWrks, "AccessEvaluateClient", "@FeignClient", "WRKS")
+  Component(feignAsst, "AssetQueryClient", "@FeignClient", "ASST conteúdo publicado")
+  Component(techlab, "TechLabAiClient", "HTTP client", "orchestration (Resilience4j, fallback)")
+  Component(elastic, "JourneyEventIndexAdapter", "Elastic", "journey-events + routing-decisions")
+  Component(msg, "Kafka producer/consumer", "messaging", "consumer LEAD/ASST/WRKS + outbox produtor")
+  Component(sec, "Security/EmpresaContextHolder", "filtros", "JWT + tenant (HTTP e consume)")
+}
+
+Rel(ctrlJornada, ucCriar, "")
+Rel(ctrlJornada, ucPublicar, "")
+Rel(ctrlRegra, ucRegra, "")
+Rel(ctrlQuery, ucConsultar, "")
+Rel(msg, ucRotear, "consome lead.qualificado/score/segmento → roteia")
+Rel(ucRotear, sMotor, "avalia decisão")
+Rel(sMotor, sAvaliador, "predicado por regra")
+Rel(ucRotear, ucAvancar, "ROTEADO → avança inscrição")
+Rel(ucAvancar, sTransicao, "state machine")
+Rel(ucCriar, mJornada, "")
+Rel(ucRotear, mInscricao, "")
+Rel(ucRotear, portsOut, "RecomendacaoIaPort / DecisaoRepositoryPort / EventoPublisherPort")
+Rel(ucConsultar, portsOut, "InscricaoRepositoryPort")
+Rel(portsOut, jpa, "impl Repository")
+Rel(portsOut, techlab, "impl RecomendacaoIaPort")
+Rel(portsOut, feignAsst, "impl AssetQueryPort")
+Rel(portsOut, feignWrks, "impl AccessDecisionPort")
+Rel(portsOut, elastic, "impl JourneyEventIndexPort")
+Rel(portsOut, msg, "impl EventoPublisherPort")
+@enduml

@@ -1,0 +1,18 @@
+@startuml c4-container-mig
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+title MIG — Container (journey-os-migrations)
+
+System_Boundary(mig, "journey-os-migrations") {
+  Container(app, "Migration Runner", "Java 21 / Spring Boot 3.5", "Boot-time app: orchestrates Flyway runs")
+  Container(flyway, "Flyway Engine", "Flyway core", "Resolves & applies versioned migrations; schema history")
+  Container(actuator, "Actuator", "Spring Boot Actuator", "health / info / flyway (internal only)")
+  Container(migsql, "Migration files", "SQL", "db/migration/global/*, db/migration/empresa/*")
+}
+
+SystemDb(pg, "PostgreSQL 15+ (RDS/Aurora)", "journeyos_global + empresa_* ; pgvector")
+
+Rel(app, flyway, "Drives global run, then per-tenant fan-out")
+Rel(flyway, migsql, "Reads versioned migrations")
+Rel(flyway, pg, "Applies DDL; writes flyway_schema_history", "JDBC")
+Rel(app, actuator, "Exposes run state / readiness")
+@enduml

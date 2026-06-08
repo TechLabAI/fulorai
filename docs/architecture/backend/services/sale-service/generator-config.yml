@@ -1,0 +1,102 @@
+# generator-config.yml — contract for scripts/be-module-generator.py
+# Module: SALE · Service: sale-service  (be-architect-scaffold)
+#
+# SALE is a domain service (type=standard): owns the sales pipeline (CRM), offers, purchases/revenue,
+# revenue attribution and LTV in emp_<slug>. Depends on WRKS (AccessDecision/JWT) and LEAD (events).
+# NO TechLab AI in the MVP — attribution/LTV are deterministic. Every field is traceable to
+# contracts/specs.
+# NOTE: list items carry NO inline "# comments" — the generator embeds raw item text into
+# generated class/file names, so inline comments would corrupt them.
+
+service: sale-service
+type: standard
+port: 8086
+# bounded_context drives the base package: com.journeyos.<bounded_context> (RULE-09).
+bounded_context: sale
+# issue_prefix pinned (issues live in a shared GLOBAL dir; auto-scan would be ambiguous).
+issue_prefix: SALE
+
+# ---- Domain (data-model.md §3) ----
+# aggregates = root tables (own repository/port); entities = child/breakdown tables (FK to an aggregate)
+domain:
+  aggregates:
+    - Oportunidade
+    - Oferta
+    - Compra
+    - ModeloAtribuicao
+    - Campanha
+    - Ltv
+  entities:
+    - HistoricoEstagio
+    - ItemCompra
+    - Atribuicao
+
+# ---- Application services (api-contract.md) ----
+application_services:
+  - name: OportunidadeService
+    operations: [create, findById, listAll, moverEstagio, ganhar, perder]
+  - name: OfertaService
+    operations: [create, findById, listAll, update, desativar]
+  - name: CompraService
+    operations: [registrar, findById, listAll, estornar, cancelar]
+  - name: AtribuicaoService
+    operations: [listModelos, createModelo, activateModelo, findByCompra]
+  - name: LtvService
+    operations: [findByContato, listAll]
+
+# ---- Enums (data-model.md CHECK constraints) ----
+enums:
+  EstadoOportunidade: [NOVA, EM_ANDAMENTO, GANHA, PERDIDA, DESCARTADA]
+  StatusCompra: [CONFIRMADA, ESTORNADA, CANCELADA]
+  BaseLegal: [CONSENTIMENTO, LEGITIMO_INTERESSE, EXECUCAO_CONTRATO, OBRIGACAO_LEGAL]
+  TipoModeloAtribuicao: [LAST_TOUCH, FIRST_TOUCH, LINEAR]
+  TipoTouchpoint: [ORIGEM_LEAD, JORNADA, CAMPANHA, DIRETO]
+
+# ---- Feign clients (hub-integration.md §1) ----
+feign_clients:
+  - name: AccessEvaluateClient
+    service: wrks-service
+    url_prop: journey-os.wrks.url
+
+# ---- Consumed events (event-contracts.md §2) ----
+consumed_events:
+  - event: journey-os.lead.qualificado
+    destination: journey-os.lead.qualificado
+    consumer_class: LeadQualificadoConsumer
+  - event: journey-os.lead.score.atualizado
+    destination: journey-os.lead.score.atualizado
+    consumer_class: LeadScoreAtualizadoConsumer
+  - event: journey-os.empresa.provisionada
+    destination: journey-os.empresa.provisionada
+    consumer_class: EmpresaProvisionadaConsumer
+  - event: journey-os.modelo.acesso.alterado
+    destination: journey-os.modelo.acesso.alterado
+    consumer_class: ModeloAcessoAlteradoConsumer
+
+# ---- Published events (event-contracts.md §1) ----
+events:
+  published:
+    - com.journeyos.sale.event.OportunidadeCriada
+    - com.journeyos.sale.event.OportunidadeEstagioAlterado
+    - com.journeyos.sale.event.OportunidadeGanha
+    - com.journeyos.sale.event.OportunidadePerdida
+    - com.journeyos.sale.event.CompraConfirmada
+    - com.journeyos.sale.event.ReceitaAtribuida
+    - com.journeyos.sale.event.LtvAtualizado
+
+# ---- Outbound ports beyond *RepositoryPort ----
+# SaleSearch=Elasticsearch revenue-events/campaign-events; SaleEventPublisher=Kafka outbox;
+# AccessDecisionCache=Redis (invalidated by modelo.acesso.alterado). No TechLab port (no AI in MVP).
+outbound_ports:
+  - SaleSearchPort
+  - SaleEventPublisherPort
+  - AccessDecisionCachePort
+
+# ---- Extra dependencies (beyond default web/jpa/test stack) ----
+# Elasticsearch client is provided by the elastic-stack overlay / elastic-client-lib (not pinned here).
+extra_dependencies:
+  - "org.springframework.boot:spring-boot-starter-data-redis"
+  - "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
+  - "org.springframework.kafka:spring-kafka"
+  - "io.github.resilience4j:resilience4j-spring-boot3"
+  - "org.springframework.security:spring-security-test"

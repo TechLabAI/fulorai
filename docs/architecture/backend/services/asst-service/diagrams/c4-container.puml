@@ -1,0 +1,28 @@
+@startuml asst-c4-container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+title ASST — Containers (asst-service)
+
+System_Boundary(asst, "asst-service (com.journeyos.asst)") {
+  Container(api, "API layer", "Spring MVC", "AssetController, AssetStudioController, AssetApprovalController")
+  Container(app, "Application layer", "Spring @Service", "Use cases + ports (lifecycle, studio, busca)")
+  Container(domain, "Domain layer", "POJO", "Asset, VersaoAsset, Aprovacao, state machine — zero Spring/JPA")
+  Container(infra, "Infrastructure", "Adapters", "JPA, Feign(WRKS), TechLabAiClient, Kafka, Elastic, security")
+}
+
+System(wrks, "WRKS", "AccessDecision + JWKS")
+System_Ext(techlab, "TechLab AI", "document_composition")
+SystemDb_Ext(pg, "PostgreSQL", "emp_<slug>")
+System_Ext(elastic, "Elasticsearch", "índice assets")
+System_Ext(kafka, "Kafka (AWS MSK)", "eventos")
+System(eureka, "REG (Eureka)", "discovery")
+
+Rel(api, app, "invoca use cases (ports in)")
+Rel(app, domain, "aplica regras de domínio")
+Rel(app, infra, "ports out → adapters")
+Rel(infra, pg, "JPA (ddl-auto=validate)")
+Rel(infra, wrks, "Feign AccessEvaluateClient", "HTTP")
+Rel(infra, techlab, "TechLabAiClient (Resilience4j)", "HTTP")
+Rel(infra, elastic, "direct java client")
+Rel(infra, kafka, "producer/consumer (outbox)")
+Rel(infra, eureka, "registro/descoberta")
+@enduml

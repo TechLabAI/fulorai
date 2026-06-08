@@ -1,0 +1,111 @@
+# Generator config — WRKS (Frontend) · input do @journeyos internal:module (scaffold A4)
+# Fonte: SPEC-01..08 + _brief.md. Naming canônico module-pattern; npmScope @journeyos.
+module: wrks
+issue_prefix: FE-WRKS
+nx_scope: wrks
+npm_scope: "@journeyos"
+shell_route: /wrks
+type: standard
+state_management: signals
+foundation: true   # WRKS hospeda rotas pré-contexto (login/empresa-select) e alimenta a Access Layer
+
+features:
+  - name: login
+    lib: feature-login
+    routes: [/login, /auth/callback]
+    components: [LoginPageComponent, OidcCallbackPageComponent]
+    pre_context: true     # não exige empresaGuard
+  - name: empresa-select
+    lib: feature-empresa-select
+    routes: [/empresa-select]
+    components: [EmpresaSelectPageComponent]
+    pre_context: true
+  - name: workspace
+    lib: feature-workspace
+    routes: [/wrks/workspace, /wrks/workspace/settings]
+    components: [WorkspaceDashboardPageComponent, WorkspaceSettingsPageComponent]
+    permission: wrks.empresa.read
+  - name: users
+    lib: feature-users
+    routes: [/wrks/users, /wrks/users/:id]
+    components: [UsersListPageComponent, UserDetailPageComponent]
+    permission: wrks.usuario.read
+  - name: rbac-viewer
+    lib: feature-rbac-viewer
+    routes: [/wrks/rbac]
+    components: [RbacViewerPageComponent]
+    permission: wrks.papel.read
+
+data_access:
+  - resource: Empresa
+    base_path: /api/v1/iam/empresas
+    service: EmpresaApiService
+    facade: WorkspaceFacade
+    operations: [list, get, update]
+  - resource: Usuario
+    base_path: /api/v1/iam/usuarios
+    service: UsuarioApiService
+    facade: UsersFacade
+    operations: [list, get, create, update, delete, associar]
+  - resource: Papel
+    base_path: /api/v1/iam/papeis
+    service: PapelApiService
+    facade: RbacFacade
+    operations: [list, getPermissoes]
+  - resource: BusinessUnit
+    base_path: /api/v1/iam/business-units
+    service: BusinessUnitApiService
+    facade: OrgStructureFacade
+    operations: [list, create, update]
+  - resource: Team
+    base_path: /api/v1/iam/teams
+    service: TeamApiService
+    facade: OrgStructureFacade
+    operations: [list, create, update]
+
+# Sessão é delegada à Access Layer (não gera data-access próprio no WRKS)
+session_delegated_to: "@journeyos/shared/auth-session"
+
+backend_contract: ../../../../backend/services/wrks-service/contracts/api-contract.md
+
+ui_libs_used:
+  - "@journeyos/shared/ui-tokens"
+  - "@journeyos/shared/ui-components"
+  - "@journeyos/shared/ui-feedback"
+
+access_libs_used:
+  - "@journeyos/shared/auth-session"
+  - "@journeyos/shared/empresa-context"
+  - "@journeyos/shared/access-decision"
+  - "@journeyos/shared/access-http-base"
+  - "@journeyos/shared/error-model"
+
+optional_libs:
+  - "@journeyos/shared/observability"
+
+extra_dependencies: []
+
+module_contract:
+  key: wrks
+  label: Workspace
+  icon: business
+  permissions:
+    - wrks.empresa.read
+    - wrks.empresa.editar
+    - wrks.usuario.read
+    - wrks.usuario.criar
+    - wrks.usuario.editar
+    - wrks.usuario.associar
+    - wrks.papel.read
+  feature_flags:
+    - { key: wrks.rbac-viewer, defaultState: enabled }
+    - { key: wrks.org-structure, defaultState: enabled }
+
+e2e:
+  features_path: docs/architecture/frontend/modules/wrks/frontend/e2e/
+  features:
+    - login-and-empresa-select.feature
+    - user-administration.feature
+    - empresa-switch-isolation.feature
+    - entitlement-denied.feature
+    - deep-link.feature

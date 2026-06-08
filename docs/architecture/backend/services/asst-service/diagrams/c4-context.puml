@@ -1,0 +1,29 @@
+@startuml asst-c4-context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+title ASST — System Context (Asset Hub)
+
+Person(head, "Marina (HEAD_GROWTH)", "Cria/compõe/submete assets")
+Person(ceo, "Rafael (INFOPRODUTOR)", "Aprova/publica assets")
+
+System(asst, "asst-service", "Repositório de assets: versionamento imutável, aprovação, Asset Studio, busca")
+
+System(gwy, "GWY (API Gateway)", "Valida JWT (JWKS), roteia /api/v1/assets/**")
+System(wrks, "WRKS", "Identidade/RBAC: AccessDecision asst.* + JWKS")
+System(consumers, "COMM / JRNY / SALE", "Consomem assets publicados (AssetQueryClient + evento)")
+System(mig, "MIG (Migrations)", "Provisiona schema emp_<slug>")
+System_Ext(techlab, "TechLab AI", "document_composition (Asset Studio) + classificação")
+SystemDb_Ext(pg, "PostgreSQL", "emp_<slug> (assets — fonte da verdade)")
+System_Ext(elastic, "Elasticsearch", "índice assets (busca + Asset Intelligence)")
+System_Ext(kafka, "Kafka (AWS MSK)", "eventos journey-os.*")
+
+Rel(head, gwy, "Cria/compõe/submete", "HTTPS")
+Rel(ceo, gwy, "Aprova/publica", "HTTPS")
+Rel(gwy, asst, "Roteia /api/v1/assets/**; valida JWT via JWKS")
+Rel(asst, wrks, "POST /access/evaluate", "HTTP/Feign")
+Rel(asst, techlab, "Compõe/classifica conteúdo", "HTTP")
+Rel(consumers, asst, "GET /assets/{id}/published", "HTTP/Feign")
+Rel(asst, mig, "Schema provisionado (precondição)")
+Rel(asst, pg, "Lê/escreve assets (emp_<slug>)")
+Rel(asst, elastic, "Indexa/consulta assets")
+Rel(asst, kafka, "Publica asset.* / consome modelo.acesso.alterado + empresa.provisionada")
+@enduml

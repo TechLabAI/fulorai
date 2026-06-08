@@ -1,0 +1,30 @@
+@startuml jrny-c4-container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+title JRNY — Containers (jrny-service)
+
+System_Boundary(jrny, "jrny-service (com.journeyos.jrny)") {
+  Container(api, "API layer", "Spring MVC", "JourneyController, RoutingRuleController, RoutingQueryController")
+  Container(app, "Application layer", "Spring @Service", "Use cases + ports (Journey Builder, Routing Engine, queries)")
+  Container(domain, "Domain layer", "POJO", "Jornada, Estagio, RegraRoteamento, InscricaoJornada, DecisaoRoteamento, MotorRoteamento — zero Spring/JPA")
+  Container(infra, "Infrastructure", "Adapters", "JPA, Feign(WRKS/ASST), TechLabAiClient, Kafka, Elastic, security")
+}
+
+System(wrks, "WRKS", "AccessDecision + JWKS")
+System(asst, "ASST", "AssetQueryClient (conteúdo publicado)")
+System_Ext(techlab, "TechLab AI", "orchestration (assist opcional)")
+SystemDb_Ext(pg, "PostgreSQL", "emp_<slug>")
+System_Ext(elastic, "Elasticsearch", "journey-events + routing-decisions")
+System_Ext(kafka, "Kafka (AWS MSK)", "eventos LEAD/ASST/WRKS in; roteamento out")
+System(eureka, "REG (Eureka)", "discovery")
+
+Rel(api, app, "invoca use cases (ports in)")
+Rel(app, domain, "aplica regras de domínio (MotorRoteamento)")
+Rel(app, infra, "ports out → adapters")
+Rel(infra, pg, "JPA (ddl-auto=validate)")
+Rel(infra, wrks, "Feign AccessEvaluateClient", "HTTP")
+Rel(infra, asst, "Feign AssetQueryClient", "HTTP")
+Rel(infra, techlab, "TechLabAiClient (Resilience4j: timeout + CB)", "HTTP")
+Rel(infra, elastic, "direct java client (fact projections)")
+Rel(infra, kafka, "consumer (LEAD/ASST/WRKS) + producer (outbox: roteamento)")
+Rel(infra, eureka, "registro/descoberta")
+@enduml

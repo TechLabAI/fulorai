@@ -1,0 +1,25 @@
+@startuml c4-component-mig
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+title MIG — Components (hexagonal, reduced) · com.journeyos.mig
+
+Container_Boundary(app, "journey-os-migrations") {
+  Component(health, "api/health", "Actuator config", "Health/info/flyway endpoints — no domain controllers")
+
+  Component(runner, "application/service/MigrationRunner", "@Service", "Orchestrates global run then per-tenant fan-out")
+
+  Component(model, "domain/model", "POJO", "SchemaTarget, MigrationVersion — zero Spring/JPA")
+
+  Component(flywayCfg, "infrastructure/config/FlywayConfig", "@Configuration", "Flyway instances, locations, baseline, validate, cleanDisabled")
+  Component(props, "infrastructure/config/MigrationProperties", "@ConfigurationProperties", "DB env vars, tenant source")
+  Component(tenantEnum, "infrastructure/persistence/TenantSchemaEnumerator", "Adapter", "Lists empresa schemas (registry / config)")
+}
+
+SystemDb(pg, "PostgreSQL", "global + empresa_*")
+
+Rel(runner, model, "Uses")
+Rel(runner, flywayCfg, "Triggers migrate per schema target")
+Rel(runner, tenantEnum, "Resolves tenant schemas")
+Rel(flywayCfg, pg, "Applies DDL", "JDBC")
+Rel(tenantEnum, pg, "Reads schema/tenant list", "JDBC")
+Rel(health, runner, "Reports readiness")
+@enduml

@@ -1,0 +1,109 @@
+# generator-config.yml — contract for scripts/be-module-generator.py
+# Module: COMM · Service: comm-service  (be-architect-scaffold)
+#
+# COMM is the Communication Hub (type=standard): owns templates, routing, multichannel dispatch
+# (provider-agnostic via channel adapters under CanalEnvioPort) and the delivery lifecycle. Uses
+# TechLab AI document_composition for the Template Studio. Operates only in the tenant schema
+# emp_<slug>. Every field below is traceable to contracts/specs.
+# NOTE: list items carry NO inline "# comments" — the generator embeds raw item text into
+# generated class/file names, so inline comments would corrupt them. Annotations are kept on
+# their own comment lines only.
+
+service: comm-service
+type: standard
+port: 8085
+# bounded_context drives the base package: com.journeyos.<bounded_context> (RULE-09).
+bounded_context: comm
+# issue_prefix pinned (issues live in a shared GLOBAL dir; auto-scan would be ambiguous).
+issue_prefix: COMM
+
+# ---- Domain (data-model.md §3) ----
+# aggregates = root tables (template_mensagem, mensagem, regra_roteamento, config_canal)
+# entities   = child tables (evento_entrega → mensagem)
+domain:
+  aggregates:
+    - TemplateMensagem
+    - Mensagem
+    - RegraRoteamento
+    - ConfigCanal
+  entities:
+    - EventoEntrega
+
+# ---- Application services (api-contract.md) ----
+application_services:
+  - name: TemplateService
+    operations: [create, findById, listAll, update, ativar, arquivar]
+  - name: TemplateStudioService
+    operations: [compose]
+  - name: MensagemService
+    operations: [dispatch, findById, listAll, listEventos]
+  - name: RoteamentoService
+    operations: [create, findById, listAll, update]
+  - name: RegistroEntregaService
+    operations: [registrarCallback]
+  - name: ConfigCanalService
+    operations: [configurar, listAll, update]
+
+# ---- Enums (data-model.md CHECK constraints) ----
+enums:
+  Canal: [WHATSAPP, EMAIL, TELEGRAM, SMS]
+  TipoTemplate: [TRANSACIONAL, MARKETING, NOTIFICACAO]
+  EstadoTemplate: [RASCUNHO, ATIVO, ARQUIVADO]
+  EstadoEntrega: [PENDENTE, ENFILEIRADA, ENVIADA, ENTREGUE, LIDA, FALHADA]
+  TipoEventoEntrega: [ENFILEIRADA, ENVIADA, ENTREGUE, LIDA, FALHADA, REJEITADA]
+  Provedor: [META_WABA, SES, SENDGRID, TELEGRAM_BOT, TWILIO, SNS]
+
+# ---- Feign clients (hub-integration.md §1) ----
+feign_clients:
+  - name: AccessEvaluateClient
+    service: wrks-service
+    url_prop: journey-os.wrks.url
+  - name: AssetQueryClient
+    service: asst-service
+    url_prop: journey-os.asst.url
+
+# ---- Consumed events (event-contracts.md §2) ----
+# JRNY/SALE trigger events (lead.roteado, estagio.transicionado, oportunidade.estagio.alterado)
+# are optional/WHERE-configured nurture triggers, added at implement (P6) once those modules pin
+# their event names — not scaffolded here to avoid coupling to unfinalized contracts.
+consumed_events:
+  - event: journey-os.modelo.acesso.alterado
+    destination: journey-os.modelo.acesso.alterado
+    consumer_class: ModeloAcessoAlteradoConsumer
+  - event: journey-os.empresa.provisionada
+    destination: journey-os.empresa.provisionada
+    consumer_class: EmpresaProvisionadaConsumer
+  - event: journey-os.asset.versao.publicada
+    destination: journey-os.asset.versao.publicada
+    consumer_class: AssetVersaoPublicadaConsumer
+  - event: journey-os.lead.segmento.alterado
+    destination: journey-os.lead.segmento.alterado
+    consumer_class: LeadSegmentoAlteradoConsumer
+
+# ---- Published events (event-contracts.md §1) ----
+events:
+  published:
+    - com.journeyos.comm.event.MensagemEnfileirada
+    - com.journeyos.comm.event.MensagemEnviada
+    - com.journeyos.comm.event.MensagemEntregue
+    - com.journeyos.comm.event.MensagemFalhada
+
+# ---- Outbound ports beyond *RepositoryPort ----
+# CanalEnvioPort=channel adapters (provider-agnostic, ADR-005); ComposicaoIaPort=TechLab AI
+# document_composition; AssetQueryPort=ASST published assets; AccessDecisionPort=WRKS;
+# CommSearchPort=Elastic communication-events; EventPublisherPort=Kafka outbox.
+outbound_ports:
+  - CanalEnvioPort
+  - ComposicaoIaPort
+  - AssetQueryPort
+  - AccessDecisionPort
+  - CommSearchPort
+  - EventPublisherPort
+
+# ---- Extra dependencies (beyond default web/jpa/test stack) ----
+extra_dependencies:
+  - "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
+  - "org.springframework.kafka:spring-kafka"
+  - "co.elastic.clients:elasticsearch-java"
+  - "io.github.resilience4j:resilience4j-spring-boot3"
+  - "org.springframework.security:spring-security-test"

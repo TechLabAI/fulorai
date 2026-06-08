@@ -1,0 +1,28 @@
+@startuml lead-c4-container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+title LEAD — Containers (lead-service)
+
+System_Boundary(lead, "lead-service") {
+  Container(api, "API REST", "Spring MVC", "/api/v1/leads|surveys|qualification|segments")
+  Container(app, "Application", "Spring @Service", "Use cases, @Transactional, EmpresaContextHolder")
+  Container(domain, "Domain", "POJO", "MaturityScoreCalculator, QualificationRuleEngine, SegmentEvaluator")
+  Container(infra, "Infrastructure", "Adapters", "persistence, messaging, clients, search, security")
+}
+
+System(wrks, "WRKS", "AccessDecision + JWKS")
+System_Ext(techlab, "TechLab AI", "qualification")
+SystemDb_Ext(pg, "PostgreSQL + pgvector", "emp_<slug>")
+System_Ext(kafka, "Kafka (AWS MSK)", "lead.* + WRKS events")
+System_Ext(elastic, "Elasticsearch", "índice leads")
+System(reg, "REG (Eureka)", "discovery")
+
+Rel(api, app, "invoca casos de uso")
+Rel(app, domain, "regras de score/segmento")
+Rel(app, infra, "portas out")
+Rel(infra, pg, "JPA validate", "JDBC")
+Rel(infra, kafka, "produce/consume", "Kafka")
+Rel(infra, techlab, "qualification (Resilience4j, fail-open)", "HTTP")
+Rel(infra, wrks, "AccessEvaluateClient (Feign, fail-closed)", "HTTP")
+Rel(infra, elastic, "index/query leads", "HTTP")
+Rel(infra, reg, "registra/descobre", "HTTP")
+@enduml

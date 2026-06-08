@@ -1,0 +1,41 @@
+@startuml gwy-c4-component
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title C4 Component — GWY (API Gateway) — pacotes hexagonais · com.journeyos.gwy
+
+Container_Boundary(gwy, "journey-os-api-gateway") {
+
+  Component(err, "api.exception.GatewayErrorHandler", "ErrorWebExceptionHandler", "Normaliza erros → ProblemDetail (RFC 7807)")
+
+  Component(authUC, "application.service.AuthenticateRequest", "Política", "Valida claims; decide ALLOW/DENY")
+  Component(tenantUC, "application.service.ResolveTenant", "Política", "Deriva TenantContext do claim")
+  Component(rateUC, "application.service.RateLimitDecision", "Política", "Resolve RateLimitKey")
+  Component(ports, "application.port.out", "Ports", "JwtVerifierPort, TokenKeyProviderPort, RateLimiterPort")
+
+  Component(model, "domain.model", "POJOs puros", "JwtClaims, TenantContext, RateLimitKey, RoutePolicy, EdgeDecision")
+
+  Component(routes, "infrastructure.config.GatewayRoutesConfig", "RouteLocator", "Tabela de rotas lb://")
+  Component(fCorr, "infrastructure.filter.CorrelationFilter", "GlobalFilter", "X-Correlation-Id + MDC")
+  Component(fStrip, "infrastructure.filter.SecurityHeaderStrip", "GlobalFilter", "Remove headers de identidade do cliente")
+  Component(fAuth, "infrastructure.filter.AuthFilter", "GlobalFilter", "Delega a AuthenticateRequest")
+  Component(fTenant, "infrastructure.filter.TenantPropagationFilter", "GlobalFilter", "Injeta X-Empresa-Id/X-Principal-Id")
+  Component(fRate, "infrastructure.filter.RateLimitFilter", "GlobalFilter + KeyResolver", "RequestRateLimiter")
+  Component(secAdp, "infrastructure.security.JwksJwtVerifier", "Adapter", "Implementa JwtVerifierPort/TokenKeyProviderPort (JWKS WRKS)")
+  Component(rateAdp, "infrastructure.ratelimit.RedisRateLimiter", "Adapter", "Implementa RateLimiterPort (Redis)")
+}
+
+Rel(fAuth, authUC, "usa")
+Rel(fTenant, tenantUC, "usa")
+Rel(fRate, rateUC, "usa")
+Rel(authUC, ports, "depende de")
+Rel(tenantUC, model, "produz/consome")
+Rel(authUC, model, "produz EdgeDecision")
+Rel(secAdp, ports, "implementa")
+Rel(rateAdp, ports, "implementa")
+Rel(routes, fCorr, "pipeline")
+
+note bottom of model
+  domain.* sem Spring / sem jakarta.persistence (RULE-01/02)
+end note
+
+@enduml

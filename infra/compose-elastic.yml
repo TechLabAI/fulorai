@@ -1,0 +1,55 @@
+# compose-elastic.yml — Elastic Stack (9.4.1)
+# Pre-req WSL2: sysctl -w vm.max_map_count=262144
+# Usage: docker compose -f docker-compose.yml -f compose-elastic.yml up -d
+
+services:
+
+  journey-os-es:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.4.1
+    container_name: journey-os-es
+    environment:
+      - node.name=journey-os-es
+      - cluster.name=journey-os-cluster
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx1g
+      - indices.memory.index_buffer_size=20%
+    ports:
+      - "9200:9200"
+    volumes:
+      - journey-os-esdata:/usr/share/elasticsearch/data
+    networks:
+      - journey-os-elastic
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health | grep -qE '\"status\":\"(green|yellow)\"'"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+
+  journey-os-kb:
+    image: docker.elastic.co/kibana/kibana:9.4.1
+    container_name: journey-os-kb
+    environment:
+      - ELASTICSEARCH_HOSTS=http://journey-os-es:9200
+      - xpack.security.enabled=false
+      - KIBANA_FLEET_SETUP=false
+    ports:
+      - "5601:5601"
+    depends_on:
+      journey-os-es:
+        condition: service_healthy
+    networks:
+      - journey-os-elastic
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:5601/api/status | grep -q '\"level\":\"available\"'"]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+
+volumes:
+  journey-os-esdata:
+
+networks:
+  journey-os-elastic:
+    driver: bridge

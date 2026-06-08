@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "$id": "JourneyOsModule",
+  "title": "Journey OS — FE module scaffold",
+  "description": "Document-driven scaffold of a Journey OS frontend module (app + libs + e2e) following the canonical module pattern (docs/architecture/frontend/standards/module-pattern.md).",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Module key in kebab-case (e.g. wrks, lead).",
+      "$default": { "$source": "argv", "index": 0 },
+      "x-prompt": "Module key (kebab-case, e.g. wrks)?"
+    },
+    "specPath": {
+      "type": "string",
+      "description": "Override path to the module generator-config.yml. Defaults to docs/architecture/frontend/modules/<name>/frontend/frontend-spec/generator-config.yml."
+    },
+    "skipFormat": {
+      "type": "boolean",
+      "description": "Skip formatting files after generation.",
+      "default": false
+    }
+  },
+  "required": ["name"]
+}

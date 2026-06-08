@@ -1,0 +1,22 @@
+@startuml c4-component-reg
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Component — REG (journey-os-service-registry)
+
+Container_Boundary(app, "journey-os-service-registry process") {
+  Component(main, "RegistryApplication", "@SpringBootApplication\n@EnableEurekaServer", "Entry point — package com.journeyos.reg")
+  Component(autocfg, "Eureka Server Auto-config", "Spring Cloud Netflix", "Provides /eureka/* + dashboard")
+  Component(actuatorcfg, "Actuator Auto-config", "Spring Boot", "health, info")
+  Component(config, "application.yml (+ local/prod)", "Spring Config", "port 8761, self-preservation, exposure")
+}
+
+Rel(main, autocfg, "enables")
+Rel(main, actuatorcfg, "enables")
+Rel(config, main, "configures", "env-driven ${VAR}")
+
+note right of main
+  No api/application/domain/infrastructure layers (ADR-001).
+  Only RULE-09 applies: base package com.journeyos.reg.
+end note
+
+@enduml

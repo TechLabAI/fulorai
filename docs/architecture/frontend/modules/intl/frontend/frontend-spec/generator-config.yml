@@ -1,0 +1,93 @@
+# Generator config — INTL (Frontend) · input do @journeyos/internal:module (scaffold A4)
+# Fonte: SPEC-01..08 + _brief.md. Naming canônico module-pattern; npmScope @journeyos.
+module: intl
+issue_prefix: FE-INTL
+nx_scope: intl
+npm_scope: "@journeyos"
+shell_route: /intl
+type: standard
+state_management: signals
+foundation: false   # INTL consome a Access Layer (WRKS); não hospeda rotas pré-contexto
+
+features:
+  - name: copilot
+    lib: feature-copilot
+    routes: [/intl/copilot, /intl/copilot/:conversaId]
+    components: [CopilotPageComponent, CopilotConversationPageComponent]
+    permission: intl.copilot.use
+  - name: knowledge
+    lib: feature-knowledge
+    routes: [/intl/knowledge, /intl/knowledge/novo, /intl/knowledge/:id]
+    components: [KnowledgeListPageComponent, KnowledgeNodeFormPageComponent]
+    permission: intl.knowledge.read
+  - name: analytics
+    lib: feature-analytics
+    routes: [/intl/analytics]
+    components: [AnalyticsPageComponent]
+    permission: intl.analytics.read
+
+data_access:
+  - resource: Conversa
+    base_path: /api/v1/copilot/conversas
+    service: CopilotApiService
+    facade: CopilotFacade
+    operations: [open, get, perguntar]
+  - resource: NoConhecimento
+    base_path: /api/v1/knowledge/nos
+    service: KnowledgeApiService
+    facade: KnowledgeFacade
+    operations: [list, get, create, update, indexar, arquivar]
+  - resource: Analytics
+    base_path: /api/v1/analytics
+    service: AnalyticsApiService
+    facade: AnalyticsFacade
+    operations: [funil, copilotUsage]
+
+# Sessão/empresa/RBAC são delegados à Access Layer (INTL consome, não produz)
+session_delegated_to: "@journeyos/shared/auth-session"
+
+backend_contract: ../../../../backend/services/intl-service/contracts/api-contract.md
+
+ui_libs_used:
+  - "@journeyos/shared/ui-tokens"
+  - "@journeyos/shared/ui-components"
+  - "@journeyos/shared/ui-feedback"
+
+access_libs_used:
+  - "@journeyos/shared/auth-session"
+  - "@journeyos/shared/empresa-context"
+  - "@journeyos/shared/access-decision"
+  - "@journeyos/shared/access-http-base"
+  - "@journeyos/shared/error-model"
+
+optional_libs:
+  - "@journeyos/shared/observability"
+
+extra_dependencies: []
+
+module_contract:
+  key: intl
+  label: Inteligência
+  icon: auto_awesome
+  permissions:
+    - intl.copilot.use
+    - intl.copilot.read
+    - intl.knowledge.read
+    - intl.knowledge.write
+    - intl.analytics.read
+  feature_flags:
+    - { key: intl.copilot, defaultState: enabled }
+    - { key: intl.knowledge, defaultState: enabled }
+    - { key: intl.analytics, defaultState: enabled }
+    - { key: intl.copilot-streaming, defaultState: disabled }
+
+e2e:
+  features_path: docs/architecture/frontend/modules/intl/frontend/e2e/
+  features:
+    - copilot-grounded-answer.feature
+    - copilot-degraded-answer.feature
+    - knowledge-curation.feature
+    - analytics-read.feature
+    - entitlement-denied.feature
+    - empresa-switch-isolation.feature
+    - deep-link.feature

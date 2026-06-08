@@ -1,0 +1,30 @@
+@startuml wrks-c4-container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+title WRKS — Container
+
+System_Boundary(wrks, "wrks-service (com.journeyos.wrks)") {
+  Container(api, "API layer", "Spring MVC", "/api/v1/iam/** controllers, ProblemDetail")
+  Container(app, "Application", "Spring @Service", "Login, TrocarEmpresa, AvaliarAcesso, GerenciarUsuario/Papel, ProvisionarEmpresa, RegistrarAuditoria")
+  Container(domain, "Domain", "POJO (no Spring/JPA)", "RBAC rules, anti-escalation, session policy")
+  Container(infra, "Infrastructure", "adapters", "JPA, Feign, Kafka, Redis, security/JWT")
+}
+
+SystemDb_Ext(pg, "PostgreSQL", "journeyos_global")
+SystemDb_Ext(redis, "Redis", "cache + blacklist")
+System_Ext(keycloak, "Keycloak", "OIDC")
+System_Ext(kafka, "Kafka", "events")
+System_Ext(elastic, "Elasticsearch", "audit-events")
+System(mig, "MIG", "provisioning")
+System(reg, "REG (Eureka)", "discovery")
+
+Rel(api, app, "calls use cases (ports.in)")
+Rel(app, domain, "uses domain services")
+Rel(app, infra, "ports.out")
+Rel(infra, pg, "JPA (validate)")
+Rel(infra, redis, "Spring Data Redis")
+Rel(infra, keycloak, "OIDC client")
+Rel(infra, kafka, "producer/consumer")
+Rel(infra, elastic, "audit index")
+Rel(infra, mig, "Feign trigger")
+Rel(infra, reg, "Eureka client")
+@enduml

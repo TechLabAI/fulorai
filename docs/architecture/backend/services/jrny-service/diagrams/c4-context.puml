@@ -1,0 +1,36 @@
+@startuml jrny-c4-context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+title JRNY — System Context (Journey & Routing)
+
+Person(head, "Marina (HEAD_GROWTH)", "Desenha jornadas, estágios e regras de roteamento")
+Person(ceo, "Rafael (INFOPRODUTOR)", "Publica/aprova a estratégia de funil")
+Person(sdr, "Lucas (SDR)", "Lê em que estágio está cada lead e por quê")
+
+System(jrny, "jrny-service", "Motor de jornada e roteamento: Journey Builder, Routing Engine, decision log imutável")
+
+System(gwy, "GWY (API Gateway)", "Valida JWT (JWKS), roteia /api/v1/journeys/** e /api/v1/routing/**")
+System(wrks, "WRKS", "Identidade/RBAC: AccessDecision jrny.* + JWKS")
+System(lead, "LEAD", "Produz lead.qualificado / score.atualizado / segmento.alterado (gatilho de roteamento)")
+System(asst, "ASST", "Conteúdo publicado referenciado nos estágios (AssetQueryClient)")
+System(consumers, "COMM / SALE", "Consomem lead.roteado / estagio.transicionado e JourneyQueryClient para AGIR no estágio")
+System(mig, "MIG (Migrations)", "Provisiona schema emp_<slug>")
+System_Ext(techlab, "TechLab AI", "orchestration — recomenda próximo-melhor-estágio (assist OPCIONAL, fallback determinístico)")
+SystemDb_Ext(pg, "PostgreSQL", "emp_<slug> (jornadas/estágios/regras/inscrições/decisões — fonte da verdade)")
+System_Ext(elastic, "Elasticsearch", "journey-events + routing-decisions (fact)")
+System_Ext(kafka, "Kafka (AWS MSK)", "eventos journey-os.*")
+
+Rel(head, gwy, "Desenha jornadas/estágios/regras", "HTTPS")
+Rel(ceo, gwy, "Publica/arquiva jornada", "HTTPS")
+Rel(sdr, gwy, "Lê estado de jornada do lead", "HTTPS")
+Rel(gwy, jrny, "Roteia /journeys/** e /routing/**; valida JWT via JWKS")
+Rel(jrny, wrks, "POST /access/evaluate", "HTTP/Feign")
+Rel(lead, kafka, "Produz lead.qualificado / score.atualizado / segmento.alterado")
+Rel(jrny, kafka, "Consome eventos LEAD/ASST/WRKS; produz lead.roteado / estagio.transicionado / jornada.publicada / jornada.concluida")
+Rel(jrny, techlab, "Consulta recomendação de roteamento (timeout + CB; opcional)", "HTTP")
+Rel(jrny, asst, "GET /assets/{id}/published (conteúdo de estágio)", "HTTP/Feign")
+Rel(consumers, jrny, "GET /routing/leads/{id}/journey (JourneyQueryClient)", "HTTP/Feign")
+Rel(consumers, kafka, "Consomem lead.roteado / estagio.transicionado")
+Rel(jrny, mig, "Schema provisionado (precondição)")
+Rel(jrny, pg, "Lê/escreve jornadas/decisões (emp_<slug>)")
+Rel(jrny, elastic, "Projeta journey-events + routing-decisions (best-effort)")
+@enduml

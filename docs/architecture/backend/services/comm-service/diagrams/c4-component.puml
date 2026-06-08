@@ -1,0 +1,60 @@
+@startuml comm-c4-component
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+title COMM — Components (hexagonal layers)
+
+Container_Boundary(api, "api") {
+  Component(ctrlTpl, "TemplateController", "@RestController", "CRUD + ativar/arquivar /api/v1/templates")
+  Component(ctrlStudio, "TemplateStudioController", "@RestController", "/templates/{id}/studio/compose")
+  Component(ctrlMsg, "MensagemController", "@RestController", "disparo + status /api/v1/messages")
+  Component(ctrlRot, "RoteamentoController", "@RestController", "/api/v1/routing-rules")
+  Component(ctrlCanal, "CanalController", "@RestController", "/api/v1/channels")
+  Component(ctrlHook, "WebhookController", "@RestController", "/api/v1/webhooks/{canal}")
+  Component(advice, "ApiExceptionHandler", "@RestControllerAdvice", "ProblemDetail RFC7807")
+}
+
+Container_Boundary(app, "application") {
+  Component(ucTpl, "CriarTemplate/ComporNoStudioService", "@Service @Transactional", "")
+  Component(ucRot, "RotearMensagemService", "@Service @Transactional", "")
+  Component(ucEnvio, "EnviarMensagemService (worker)", "@Service", "")
+  Component(ucEvt, "RegistrarEventoEntregaService", "@Service @Transactional", "callbacks")
+  Component(ucCanal, "ConfigurarCanalService", "@Service @Transactional", "")
+  Component(portsOut, "Ports OUT", "interfaces", "TemplateRepositoryPort, MensagemRepositoryPort, RoteamentoRepositoryPort, CanalEnvioPort, ComposicaoIaPort, AssetQueryPort, AccessDecisionPort, EventoPublisherPort, CommSearchPort")
+}
+
+Container_Boundary(domain, "domain") {
+  Component(mModel, "Template / Mensagem / EventoEntrega / RegraRoteamento / ConfigCanal", "POJO", "agregados")
+  Component(sDomain, "ResolucaoRoteamento / TransicaoEntrega / RenderTemplate", "domain services", "regras + invariantes")
+}
+
+Container_Boundary(infra, "infrastructure") {
+  Component(jpa, "JPA adapters", "persistence", "entity/repository/adapter (emp_<slug>)")
+  Component(feignWrks, "AccessEvaluateClient", "@FeignClient", "WRKS")
+  Component(feignAsst, "AssetQueryClient", "@FeignClient", "ASST")
+  Component(techlab, "TechLabAiClient", "HTTP client", "document_composition")
+  Component(channels, "Channel adapters", "CanalEnvioPort", "WhatsApp/Email/Telegram/SMS + CanalEnvioRouter")
+  Component(elastic, "CommSearchAdapter", "Elastic", "índice communication-events")
+  Component(msg, "Kafka producer/consumer + dispatch worker", "messaging", "outbox + idempotência")
+  Component(sec, "Security/EmpresaContextHolder", "filtros", "JWT + tenant + webhook signature")
+}
+
+Rel(ctrlTpl, ucTpl, "")
+Rel(ctrlStudio, ucTpl, "ComposicaoIaPort")
+Rel(ctrlMsg, ucRot, "")
+Rel(ctrlRot, ucRot, "")
+Rel(ctrlCanal, ucCanal, "")
+Rel(ctrlHook, ucEvt, "")
+Rel(ucRot, sDomain, "ResolucaoRoteamento/Render")
+Rel(ucEnvio, sDomain, "TransicaoEntrega")
+Rel(ucEvt, sDomain, "TransicaoEntrega")
+Rel(ucTpl, mModel, "")
+Rel(ucRot, portsOut, "Repository/CanalEnvio")
+Rel(ucEnvio, portsOut, "CanalEnvioPort/Evento")
+Rel(ucTpl, portsOut, "ComposicaoIaPort/AssetQueryPort")
+Rel(portsOut, jpa, "impl")
+Rel(portsOut, techlab, "impl ComposicaoIaPort")
+Rel(portsOut, channels, "impl CanalEnvioPort")
+Rel(portsOut, feignAsst, "impl AssetQueryPort")
+Rel(portsOut, elastic, "impl CommSearchPort")
+Rel(portsOut, msg, "impl EventoPublisherPort")
+Rel(portsOut, feignWrks, "impl AccessDecisionPort")
+@enduml

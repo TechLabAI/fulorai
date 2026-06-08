@@ -1,0 +1,35 @@
+@startuml sale-c4-context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+title SALE — Context (sale-service)
+
+Person(closer, "Lucas (SDR/Closer)", "Operates the sales pipeline")
+Person(ceo, "Rafael (Infoprodutor/CEO)", "Watches revenue & LTV")
+Person(growth, "Marina (Head Growth)", "Analyzes attribution/ROI")
+
+System(sale, "sale-service", "Pipeline/CRM, offers, purchases, revenue attribution, LTV")
+
+System(gwy, "GWY (API Gateway)", "Auth/routing")
+System(wrks, "WRKS", "AccessDecision + JWKS + empresa events")
+System(lead, "LEAD", "lead.qualificado / lead.score.atualizado")
+System_Ext(checkout, "Checkout / gateway", "Hotmart, payment link (confirmed order)")
+System_Ext(kafka, "Kafka (AWS MSK)", "domain events")
+System_Ext(elastic, "Elasticsearch", "revenue-events, campaign-events")
+System(intl, "INTL", "revenue analytics / ROI")
+System(comm, "COMM", "post-sale nurturing")
+
+Rel(closer, gwy, "manage pipeline", "HTTPS")
+Rel(ceo, gwy, "view revenue/LTV", "HTTPS")
+Rel(growth, gwy, "view attribution", "HTTPS")
+Rel(gwy, sale, "routes authenticated calls", "HTTPS")
+Rel(checkout, sale, "confirmed order (service token, idempotent)", "HTTPS")
+Rel(sale, wrks, "AccessDecision (Feign, fail-closed)", "HTTP")
+Rel(lead, sale, "lead.qualificado / score (consume)", "Kafka")
+Rel(sale, kafka, "publish oportunidade.*/compra.*/receita.*/ltv.*", "Kafka")
+Rel(sale, elastic, "index/query revenue", "HTTP")
+Rel(sale, intl, "revenue events (async)", "Kafka")
+Rel(sale, comm, "post-sale events (async)", "Kafka")
+note right of sale
+  No TechLab AI in MVP.
+  Does NOT process payment.
+end note
+@enduml

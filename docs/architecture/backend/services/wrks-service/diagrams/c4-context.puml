@@ -1,0 +1,29 @@
+@startuml wrks-c4-context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+title WRKS — System Context (Workspace & Identity)
+
+Person(admin, "Rafael (INFOPRODUTOR)", "Admin do workspace: cria empresa, convida usuários, atribui papéis")
+Person(head, "Marina (HEAD_GROWTH)", "Gerencia equipe/business unit")
+
+System(wrks, "wrks-service", "Identidade, RBAC, multi-tenancy. Emite JWT + AccessDecision.")
+
+System_Ext(keycloak, "Keycloak", "IdP OIDC (autenticação)")
+System(gwy, "GWY (API Gateway)", "Valida JWT (JWKS), roteia")
+System(services, "Serviços de negócio", "LEAD/JRNY/ASST/COMM/SALE/INTL — consomem AccessDecision")
+System(mig, "MIG (Migrations)", "Provisiona schema emp_<slug>")
+SystemDb_Ext(pg, "PostgreSQL", "journeyos_global (IAM)")
+SystemDb_Ext(redis, "Redis/Valkey", "sessão + access cache + blacklist")
+System_Ext(kafka, "Kafka (AWS MSK)", "eventos + auditoria")
+System_Ext(elastic, "Elasticsearch", "índice audit-events")
+
+Rel(admin, gwy, "Administra workspace", "HTTPS")
+Rel(head, gwy, "Gerencia equipe", "HTTPS")
+Rel(gwy, wrks, "Roteia /api/v1/iam/**; valida JWT via JWKS")
+Rel(wrks, keycloak, "OIDC code exchange")
+Rel(services, wrks, "POST /access/evaluate", "HTTP/Feign")
+Rel(wrks, mig, "Provisiona tenant", "HTTP")
+Rel(wrks, pg, "Lê/escreve IAM")
+Rel(wrks, redis, "Cache")
+Rel(wrks, kafka, "Publica modelo.acesso.alterado / consome journey-os.*")
+Rel(wrks, elastic, "Indexa audit-events")
+@enduml

@@ -1,0 +1,33 @@
+@startuml comm-c4-context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+title COMM — System Context (Communication Hub)
+
+Person(head, "Marina (HEAD_GROWTH)", "Cria templates, define roteamento")
+Person(sdr, "Lucas (SDR)", "Dispara 1:1, acompanha status")
+
+System(comm, "comm-service", "Templates, roteamento, disparo multicanal, ciclo de vida de entrega")
+
+System(gwy, "GWY (API Gateway)", "Valida JWT (JWKS), roteia /api/v1/{templates,messages,...}/**")
+System(wrks, "WRKS", "Identidade/RBAC: AccessDecision comm.* + JWKS")
+System(asst, "ASST", "Assets publicados (AssetQueryClient) como fonte de template")
+System(triggers, "JRNY / SALE / LEAD", "Acionam disparos (estágio, oferta, gatilho)")
+System(mig, "MIG (Migrations)", "Provisiona schema emp_<slug>")
+System_Ext(techlab, "TechLab AI", "document_composition (Template Studio)")
+System_Ext(providers, "Provedores de canal", "Meta WABA / SES / Telegram / Twilio (envio + webhooks)")
+SystemDb_Ext(pg, "PostgreSQL", "emp_<slug> (comunicação — fonte da verdade)")
+System_Ext(elastic, "Elasticsearch", "índice communication-events (fact)")
+System_Ext(kafka, "Kafka (AWS MSK)", "eventos journey-os.*")
+
+Rel(head, gwy, "Cria templates/regras", "HTTPS")
+Rel(sdr, gwy, "Dispara/consulta status", "HTTPS")
+Rel(gwy, comm, "Roteia /api/v1/**; valida JWT via JWKS")
+Rel(comm, wrks, "POST /access/evaluate", "HTTP/Feign")
+Rel(comm, asst, "GET /assets/{id}/published", "HTTP/Feign")
+Rel(triggers, comm, "POST /messages / eventos", "HTTP + Kafka")
+Rel(comm, techlab, "Compõe copy de template", "HTTP")
+Rel(comm, providers, "Envia mensagem / recebe webhook", "HTTP")
+Rel(comm, mig, "Schema provisionado (precondição)")
+Rel(comm, pg, "Lê/escreve comunicação (emp_<slug>)")
+Rel(comm, elastic, "Projeta ciclo de vida (communication-events)")
+Rel(comm, kafka, "Publica mensagem.* / consome acesso/asset/lead/jornada/oportunidade")
+@enduml

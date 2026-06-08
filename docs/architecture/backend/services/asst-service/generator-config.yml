@@ -1,0 +1,91 @@
+# generator-config.yml — contract for scripts/be-module-generator.py
+# Module: ASST · Service: asst-service  (be-architect-scaffold)
+#
+# ASST is the Asset Hub (type=standard): owns the asset lifecycle (immutable versioning +
+# approval/publication state machine), the Asset Studio (TechLab AI document_composition) and
+# Asset Intelligence (Elastic `assets` projection). Operates only in the tenant schema emp_<slug>.
+# Every field below is traceable to contracts/specs.
+# NOTE: list items carry NO inline "# comments" — the generator embeds raw item text into
+# generated class/file names, so inline comments would corrupt them. Annotations are kept on
+# their own comment lines only.
+
+service: asst-service
+type: standard
+port: 8083
+# bounded_context drives the base package: com.journeyos.<bounded_context> (RULE-09).
+bounded_context: asst
+# issue_prefix pinned (issues live in a shared GLOBAL dir; auto-scan would be ambiguous).
+issue_prefix: ASST
+
+# ---- Domain (data-model.md §3) ----
+# aggregates = root tables (asset)
+# entities   = child tables (versao_asset, aprovacao, tag_asset)
+domain:
+  aggregates:
+    - Asset
+  entities:
+    - VersaoAsset
+    - Aprovacao
+    - TagAsset
+
+# ---- Application services (api-contract.md) ----
+application_services:
+  - name: AssetService
+    operations: [create, findById, listAll, update, arquivar]
+  - name: VersaoAssetService
+    operations: [create, findById, listByAsset, findPublished]
+  - name: AssetStudioService
+    operations: [compose]
+  - name: AprovacaoService
+    operations: [submit, approve, publish]
+  - name: BuscaAssetService
+    operations: [search]
+
+# ---- Enums (data-model.md CHECK constraints) ----
+enums:
+  TipoAsset: [LANDING_PAGE, EMAIL, CRIATIVO, ROTEIRO, DOCUMENTO, SCRIPT_SDR]
+  EstadoAsset: [RASCUNHO, EM_REVISAO, APROVADO, PUBLICADO, REJEITADO, ARQUIVADO]
+  OrigemVersao: [MANUAL, ASSET_STUDIO]
+  EstadoVersao: [RASCUNHO, PUBLICADA]
+  DecisaoAprovacao: [APROVADO, REJEITADO]
+  OrigemTag: [MANUAL, IA]
+
+# ---- Feign clients (hub-integration.md §1) ----
+feign_clients:
+  - name: AccessEvaluateClient
+    service: wrks-service
+    url_prop: journey-os.wrks.url
+
+# ---- Consumed events (event-contracts.md §2) ----
+consumed_events:
+  - event: journey-os.modelo.acesso.alterado
+    destination: journey-os.modelo.acesso.alterado
+    consumer_class: ModeloAcessoAlteradoConsumer
+  - event: journey-os.empresa.provisionada
+    destination: journey-os.empresa.provisionada
+    consumer_class: EmpresaProvisionadaConsumer
+
+# ---- Published events (event-contracts.md §1) ----
+events:
+  published:
+    - com.journeyos.asst.event.AssetCriado
+    - com.journeyos.asst.event.AssetAprovado
+    - com.journeyos.asst.event.AssetRejeitado
+    - com.journeyos.asst.event.AssetVersaoPublicada
+
+# ---- Outbound ports beyond *RepositoryPort ----
+# ComposicaoIaPort=TechLab AI document_composition (HTTP); AssetSearchPort=Elastic assets;
+# AccessDecisionPort=WRKS; EventPublisherPort=Kafka outbox.
+outbound_ports:
+  - ComposicaoIaPort
+  - AssetSearchPort
+  - AccessDecisionPort
+  - EventPublisherPort
+
+# ---- Extra dependencies (beyond default web/jpa/test stack) ----
+extra_dependencies:
+  - "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
+  - "org.springframework.kafka:spring-kafka"
+  - "co.elastic.clients:elasticsearch-java"
+  - "io.github.resilience4j:resilience4j-spring-boot3"
+  - "org.springframework.security:spring-security-test"

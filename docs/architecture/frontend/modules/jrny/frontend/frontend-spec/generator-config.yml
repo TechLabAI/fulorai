@@ -1,0 +1,114 @@
+# Generator config — JRNY (Frontend) · input do @journeyos/internal:module (scaffold A4)
+# Fonte: SPEC-01..08 + _brief.md. Naming canônico module-pattern; npmScope @journeyos.
+module: jrny
+issue_prefix: FE-JRNY
+nx_scope: jrny
+npm_scope: "@journeyos"
+shell_route: /jrny
+type: standard
+state_management: signals
+foundation: false   # JRNY é módulo de domínio (orquestrador); depende de WRKS (auth) + Access Layer
+
+features:
+  - name: journey-list
+    lib: feature-journey-list
+    routes: [/jrny/journeys]
+    components: [JourneyListPageComponent, JourneyFilterBarComponent, JourneyRowComponent, CreateJourneyDialogComponent]
+    permission: jrny.jornada.ler
+  - name: journey-builder
+    lib: feature-journey-builder
+    routes: [/jrny/journeys/:id/builder]
+    components: [JourneyBuilderPageComponent, JourneyHeaderComponent, StageListComponent, StageCardComponent, PublishBarComponent]
+    permission: jrny.jornada.ler
+  - name: stage-editor
+    lib: feature-stage-editor
+    routes: [/jrny/journeys/:id/stages/:stageId]
+    components: [StageEditorPageComponent, StageFormComponent, AssetRefPickerComponent]
+    permission: jrny.estagio.ler
+  - name: routing-engine
+    lib: feature-routing-engine
+    routes: [/jrny/journeys/:id/rules]
+    components: [RoutingRulesPageComponent, RuleRowComponent, RuleEditorDialogComponent, ConditionBuilderComponent]
+    permission: jrny.roteamento.ler
+  - name: decision-log
+    lib: feature-decision-log
+    routes: [/jrny/leads/:leadId/decisions]
+    components: [DecisionLogPageComponent, LeadJourneyStateCardComponent, DecisionTimelineComponent, DecisionItemComponent, AssistBadgeComponent]
+    permission: jrny.roteamento.ler
+  - name: journey-analytics
+    lib: feature-journey-analytics
+    routes: [/jrny/analytics]
+    components: [JourneyAnalyticsPageComponent, FunnelChartComponent, RoutingHealthCardComponent]
+    permission: jrny.roteamento.ler
+
+data_access:
+  - resource: Journey
+    base_path: /api/v1/journeys
+    service: JourneyApiService
+    facade: JourneyListFacade
+    operations: [list, get, create, update, publicar, arquivar, novaVersao]
+  - resource: Stage
+    base_path: /api/v1/journeys/:id/estagios
+    service: StageApiService
+    facade: JourneyBuilderFacade
+    operations: [list, create, update, reorder]
+  - resource: RoutingRule
+    base_path: /api/v1/routing/rules
+    service: RoutingRuleApiService
+    facade: RoutingRulesFacade
+    operations: [list, create, update]
+  - resource: RoutingQuery
+    base_path: /api/v1/routing/leads/:leadId
+    service: RoutingQueryApiService
+    facade: DecisionLogFacade
+    operations: [getJourneyState, listDecisions]
+
+backend_contract: ../../../../backend/services/jrny-service/contracts/api-contract.md
+
+ui_libs_used:
+  - "@journeyos/shared/ui-tokens"
+  - "@journeyos/shared/ui-components"
+  - "@journeyos/shared/ui-feedback"
+
+access_libs_used:
+  - "@journeyos/shared/auth-session"
+  - "@journeyos/shared/empresa-context"
+  - "@journeyos/shared/access-decision"
+  - "@journeyos/shared/access-http-base"
+  - "@journeyos/shared/error-model"
+
+optional_libs:
+  - "@journeyos/shared/observability"
+
+extra_dependencies: []
+
+module_contract:
+  key: jrny
+  label: Jornadas
+  icon: account_tree
+  permissions:
+    - jrny.jornada.ler
+    - jrny.jornada.criar
+    - jrny.jornada.editar
+    - jrny.jornada.publicar
+    - jrny.jornada.arquivar
+    - jrny.estagio.ler
+    - jrny.estagio.criar
+    - jrny.estagio.editar
+    - jrny.regra.criar
+    - jrny.regra.editar
+    - jrny.roteamento.ler
+  feature_flags:
+    - { key: jrny.journey-analytics, defaultState: enabled }
+    - { key: jrny.journey-builder-canvas, defaultState: disabled }
+
+e2e:
+  features_path: docs/architecture/frontend/modules/jrny/frontend/e2e/
+  features:
+    - journey-authoring.feature
+    - journey-publish-guards.feature
+    - routing-rules.feature
+    - decision-log-explainability.feature
+    - empresa-switch-isolation.feature
+    - entitlement-denied.feature
+    - deep-link.feature

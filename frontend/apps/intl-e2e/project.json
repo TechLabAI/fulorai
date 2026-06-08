@@ -1,0 +1,20 @@
+{
+  "name": "intl-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/intl-e2e/src",
+  "tags": ["scope:intl", "type:e2e"],
+  "implicitDependencies": ["intl"],
+  "targets": {
+    "e2e": {
+      "executor": "@nx/playwright:playwright",
+      "outputs": ["{workspaceRoot}/dist/.playwright/apps/intl-e2e"],
+      "options": {
+        "config": "apps/intl-e2e/playwright.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

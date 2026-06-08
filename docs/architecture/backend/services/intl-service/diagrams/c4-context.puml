@@ -1,0 +1,32 @@
+@startuml c4-context-intl
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title INTL (intl-service) — C4 Context
+
+Person(rafael, "Infoprodutor (Rafael)", "Pergunta ao Copilot; lê analítica")
+Person(marina, "Head de Growth (Marina)", "Cura conhecimento; analítica por origem")
+Person(lucas, "SDR (Lucas)", "Resumos rápidos de contexto")
+
+System_Boundary(intl, "intl-service (INTL)") {
+  System(copilot, "AI Copilot + Knowledge + Plataforma de Dados", "Respostas fundamentadas (RAG), Base de Conhecimento, governança Elastic, leitura analítica")
+}
+
+System_Ext(gwy, "API Gateway (GWY)", "Roteamento, auth")
+System_Ext(wrks, "WRKS", "Identidade/JWT + AccessDecision + eventos de tenant")
+System_Ext(asst, "ASST", "Asset publicado (fonte de conhecimento)")
+System_Ext(techlab, "TechLab AI", "knowledge + orchestration (RAG)")
+System_Ext(es, "Elasticsearch", "Recuperação + analítica + projeções")
+System_Ext(kafka, "Kafka / AWS MSK", "Event bus")
+
+Rel(rafael, gwy, "Pergunta / analítica", "HTTPS")
+Rel(marina, gwy, "Cura conhecimento", "HTTPS")
+Rel(lucas, gwy, "Resumos", "HTTPS")
+Rel(gwy, copilot, "/api/v1/copilot|knowledge|analytics", "JWT")
+Rel(copilot, wrks, "AccessDecision + JWKS", "Feign/HTTPS")
+Rel(wrks, copilot, "empresa.provisionada / modelo.acesso.alterado", "Kafka")
+Rel(asst, copilot, "asset.versao.publicada", "Kafka")
+Rel(copilot, asst, "AssetQueryClient (opcional)", "Feign")
+Rel(copilot, techlab, "embed / retrieve / compose", "HTTP")
+Rel(copilot, es, "search / index / DLQ", "HTTP")
+Rel(copilot, kafka, "copilot.resposta.gerada", "Kafka")
+@enduml

@@ -1,0 +1,100 @@
+# Generator config — ASST (Frontend) · input do @journeyos internal:module (scaffold A4)
+# Fonte: SPEC-01..08 + _brief.md. Naming canônico module-pattern; npmScope @journeyos.
+module: asst
+issue_prefix: FE-ASST
+nx_scope: asst
+npm_scope: "@journeyos"
+shell_route: /asst
+type: standard
+state_management: signals
+foundation: false   # ASST é módulo de domínio; depende de WRKS (auth) + Access Layer
+
+features:
+  - name: asset-library
+    lib: feature-asset-library
+    routes: [/asst/library]
+    components: [AssetLibraryPageComponent, NewAssetDialogComponent]
+    permission: asst.asset.ler
+  - name: asset-detail
+    lib: feature-asset-detail
+    routes: [/asst/assets/:id]
+    components: [AssetDetailPageComponent, VersionTimelineComponent, NewVersionDialogComponent]
+    permission: asst.asset.ler
+  - name: asset-studio
+    lib: feature-asset-studio
+    routes: [/asst/assets/:id/studio]
+    components: [AssetStudioPageComponent]
+    permission: asst.studio.compor
+  - name: approval-workflow
+    lib: feature-approval-workflow
+    routes: [/asst/approvals]
+    components: [ApprovalQueuePageComponent, ApprovalDecisionDialogComponent]
+    permission: asst.asset.aprovar
+
+data_access:
+  - resource: Asset
+    base_path: /api/v1/assets
+    service: AssetApiService
+    facade: AssetCatalogFacade
+    operations: [list, get, create, update, archive]
+  - resource: Versao
+    base_path: /api/v1/assets/:id/versoes
+    service: VersaoApiService
+    facade: AssetDetailFacade
+    operations: [list, get, create, getPublished]
+  - resource: Studio
+    base_path: /api/v1/assets/:id/studio/compose
+    service: StudioApiService
+    facade: AssetStudioFacade
+    operations: [compose]
+  - resource: Workflow
+    base_path: /api/v1/assets/:id
+    service: WorkflowApiService
+    facade: ApprovalFacade
+    operations: [submit, approve, publish, listQueue]
+
+backend_contract: ../../../../backend/services/asst-service/contracts/api-contract.md
+
+ui_libs_used:
+  - "@journeyos/shared/ui-tokens"
+  - "@journeyos/shared/ui-components"
+  - "@journeyos/shared/ui-feedback"
+
+access_libs_used:
+  - "@journeyos/shared/auth-session"
+  - "@journeyos/shared/empresa-context"
+  - "@journeyos/shared/access-decision"
+  - "@journeyos/shared/access-http-base"
+  - "@journeyos/shared/error-model"
+
+optional_libs:
+  - "@journeyos/shared/observability"
+
+extra_dependencies: []
+
+module_contract:
+  key: asst
+  label: Assets
+  icon: folder_special
+  permissions:
+    - asst.asset.ler
+    - asst.asset.criar
+    - asst.asset.editar
+    - asst.asset.submeter
+    - asst.asset.aprovar
+    - asst.asset.publicar
+    - asst.asset.arquivar
+    - asst.studio.compor
+  feature_flags:
+    - { key: asst.asset-studio, defaultState: enabled }
+    - { key: asst.approval-workflow, defaultState: enabled }
+
+e2e:
+  features_path: docs/architecture/frontend/modules/asst/frontend/e2e/
+  features:
+    - asset-lifecycle.feature
+    - asset-studio-degradation.feature
+    - approval-workflow.feature
+    - empresa-isolation.feature
+    - entitlement-denied.feature
+    - deep-link.feature

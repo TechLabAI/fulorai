@@ -1,0 +1,6 @@
+package com.journeyos.intl.api.dto;
+
+import java.util.UUID;
+
+// TODO: define fields from api-contract.md
+public record AnalyticsResponse(UUID id, String status /* TODO: add fields */) {}

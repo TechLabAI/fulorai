@@ -1,0 +1,20 @@
+@startuml c4-context-mig
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+title MIG — System Context (journey-os-migrations)
+
+Person(devops, "Platform / DevOps Engineer", "Runs migrations in CI/CD and locally")
+System_Boundary(ci, "CI/CD Pipeline") {
+  System(pipeline, "CI/CD Job", "Invokes MIG before deploying services")
+}
+
+System(mig, "journey-os-migrations", "Centralized Flyway runner — owns all schema DDL (global + per-tenant)")
+
+SystemDb(pg, "PostgreSQL 15+ (RDS/Aurora)", "journeyos_global + empresa_* schemas; pgvector")
+System_Ext(services, "Journey OS services", "WRKS/LEAD/ASST/JRNY/COMM/SALE/INTL — boot with ddl-auto=validate")
+
+Rel(devops, mig, "Runs (bootRun)")
+Rel(pipeline, mig, "Executes before deploy")
+Rel(mig, pg, "Applies migrations (DDL)", "JDBC")
+Rel(services, pg, "Read/write data; validate schema", "JDBC")
+Rel_U(services, mig, "Depend on prepared schema (transitive, run-order)")
+@enduml

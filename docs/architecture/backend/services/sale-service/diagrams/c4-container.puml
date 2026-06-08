@@ -1,0 +1,30 @@
+@startuml sale-c4-container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+title SALE — Containers (sale-service)
+
+System_Boundary(sale, "sale-service") {
+  Container(api, "API REST", "Spring MVC", "/api/v1/oportunidades|ofertas|compras|atribuicao|ltv")
+  Container(app, "Application", "Spring @Service", "Use cases, @Transactional, EmpresaContextHolder")
+  Container(domain, "Domain", "POJO", "PipelineService, AttributionEngine, LtvCalculator")
+  Container(infra, "Infrastructure", "Adapters", "persistence, messaging, search, security")
+}
+
+System(wrks, "WRKS", "AccessDecision + JWKS")
+System(lead, "LEAD", "lead.qualificado / score")
+SystemDb_Ext(pg, "PostgreSQL", "emp_<slug>")
+System_Ext(kafka, "Kafka (AWS MSK)", "oportunidade.*/compra.* + LEAD/WRKS events")
+System_Ext(elastic, "Elasticsearch", "revenue-events, campaign-events")
+System_Ext(checkout, "Checkout/gateway", "confirmed order")
+System(reg, "REG (Eureka)", "discovery")
+
+Rel(api, app, "invoca casos de uso")
+Rel(app, domain, "pipeline/atribuição/LTV")
+Rel(app, infra, "portas out")
+Rel(infra, pg, "JPA validate", "JDBC")
+Rel(infra, kafka, "produce/consume", "Kafka")
+Rel(infra, wrks, "AccessEvaluateClient (Feign, fail-closed)", "HTTP")
+Rel(lead, infra, "consume lead.* ", "Kafka")
+Rel(checkout, api, "POST /compras (service token)", "HTTP")
+Rel(infra, elastic, "index/query revenue", "HTTP")
+Rel(infra, reg, "registra/descobre", "HTTP")
+@enduml

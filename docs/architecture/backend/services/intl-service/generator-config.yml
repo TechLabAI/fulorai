@@ -1,0 +1,96 @@
+# generator-config.yml — contract for scripts/be-module-generator.py
+# Module: INTL · Service: intl-service  (be-architect-scaffold)
+#
+# INTL is a domain+platform service (type=standard): owns the AI Copilot + Knowledge Base in
+# emp_<slug> and governs the Elastic data platform (traceability/DLQ/index registry) + cross-index
+# analytics read. Depends on WRKS (AccessDecision/JWT), ASST (asset as knowledge source) and
+# TechLab AI (knowledge + orchestration). Every field is traceable to contracts/specs.
+# NOTE: list items carry NO inline "# comments" — the generator embeds raw item text into
+# generated class/file names, so inline comments would corrupt them.
+
+service: intl-service
+type: standard
+port: 8087
+# bounded_context drives the base package: com.journeyos.<bounded_context> (RULE-09).
+bounded_context: intl
+# issue_prefix pinned (issues live in a shared GLOBAL dir; auto-scan would be ambiguous).
+issue_prefix: INTL
+
+# ---- Domain (data-model.md §3) ----
+# aggregates = root tables (own repository/port); entities = child tables (FK to an aggregate)
+domain:
+  aggregates:
+    - BaseConhecimento
+    - FonteConhecimento
+    - ConversaCopiloto
+    - EventoIndexado
+  entities:
+    - NoConhecimento
+    - MensagemCopiloto
+    - Citacao
+
+# ---- Application services (api-contract.md) ----
+application_services:
+  - name: CopilotService
+    operations: [abrirConversa, perguntar, findConversa]
+  - name: KnowledgeService
+    operations: [createNo, indexarNo, listNos, updateNo, arquivarNo]
+  - name: AnalyticsService
+    operations: [funil, copilotUsage]
+
+# ---- Enums (data-model.md CHECK constraints) ----
+enums:
+  FonteTipo: [MANUAL, ASSET, IMPORT]
+  StatusNo: [RASCUNHO, INDEXADO, ARQUIVADO]
+  EstadoConversa: [ABERTA, PROCESSANDO, RESPONDIDA, DEGRADADA, ERRO]
+  PapelMensagem: [USUARIO, COPILOTO]
+  StatusMensagem: [PENDENTE, RESPONDIDA, DEGRADADA, NAO_FUNDAMENTADA, ERRO]
+  StatusIndexacao: [INDEXADO, DLQ]
+
+# ---- Feign clients (hub-integration.md §1, §2) ----
+feign_clients:
+  - name: AccessEvaluateClient
+    service: wrks-service
+    url_prop: journey-os.wrks.url
+  - name: AssetQueryClient
+    service: asst-service
+    url_prop: journey-os.asst.url
+
+# ---- Consumed events (event-contracts.md §2) ----
+consumed_events:
+  - event: journey-os.asset.versao.publicada
+    destination: journey-os.asset.versao.publicada
+    consumer_class: AssetVersaoPublicadaConsumer
+  - event: journey-os.empresa.provisionada
+    destination: journey-os.empresa.provisionada
+    consumer_class: EmpresaProvisionadaConsumer
+  - event: journey-os.modelo.acesso.alterado
+    destination: journey-os.modelo.acesso.alterado
+    consumer_class: ModeloAcessoAlteradoConsumer
+
+# ---- Published events (event-contracts.md §1) ----
+events:
+  published:
+    - com.journeyos.intl.event.CopilotRespostaGerada
+
+# ---- Outbound ports beyond *RepositoryPort ----
+# IntlSearch/IntlIndex=Elasticsearch via elastic-client-lib (RAG retrieval/analytics + own
+# projections + DLQ); Knowledge/Orchestration=TechLab AI (RAG, never call AI directly);
+# IntlEventPublisher=Kafka outbox; AccessDecisionCache=Redis (invalidated by modelo.acesso.alterado).
+outbound_ports:
+  - IntlSearchPort
+  - IntlIndexPort
+  - KnowledgePort
+  - OrchestrationPort
+  - IntlEventPublisherPort
+  - AccessDecisionCachePort
+
+# ---- Extra dependencies (beyond default web/jpa/test stack) ----
+# Elasticsearch client provided by the elastic-stack overlay / elastic-client-lib (not pinned here).
+# pgvector column mapping is refined at implement time (no canonical hibernate-vector artifact pinned).
+extra_dependencies:
+  - "org.springframework.boot:spring-boot-starter-data-redis"
+  - "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
+  - "org.springframework.kafka:spring-kafka"
+  - "io.github.resilience4j:resilience4j-spring-boot3"
+  - "org.springframework.security:spring-security-test"

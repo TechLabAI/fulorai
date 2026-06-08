@@ -1,0 +1,20 @@
+{
+  "name": "sale-feature-revenue-dashboard",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/sale/feature-revenue-dashboard/src",
+  "prefix": "jos",
+  "projectType": "library",
+  "tags": ["scope:sale", "type:feature"],
+  "targets": {
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/sale/feature-revenue-dashboard/jest.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

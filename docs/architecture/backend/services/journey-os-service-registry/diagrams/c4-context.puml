@@ -1,0 +1,29 @@
+@startuml c4-context-reg
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title System Context — REG (journey-os-service-registry)
+
+Person(operator, "DevOps / SRE Operator", "Inspects service health during operations")
+
+System(reg, "journey-os-service-registry", "Eureka Server (port 8761)\nService discovery authority")
+
+System_Boundary(backend, "Journey OS Backend") {
+  System(services, "Business microservices", "WRKS, LEAD, JRNY, ASST, COMM, SALE, INTL")
+  System(gwy, "journey-os-api-gateway (GWY)", "Routes requests; resolves targets via registry")
+}
+
+System_Ext(orchestrator, "Container Orchestrator", "Docker Compose / ECS / K8s — probes health")
+
+Rel(services, reg, "Register, heartbeat, fetch registry", "Eureka/HTTP")
+Rel(gwy, reg, "Fetch registry to resolve routes", "Eureka/HTTP")
+Rel(operator, reg, "View dashboard / health", "HTTPS")
+Rel(orchestrator, reg, "Liveness/readiness probe", "GET /actuator/health")
+
+note right of reg
+  No outbound calls.
+  No database, no broker, no tenant context.
+  Upstream infra: every service depends on REG;
+  REG depends on no one.
+end note
+
+@enduml

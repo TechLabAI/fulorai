@@ -1,0 +1,45 @@
+# Brief — JRNY (Journey & Routing) · Frontend
+
+> Fonte estruturada para `/fe-architect-specs`, `/fe-architect-backlog` e `/fe-architect-scaffold`.
+> **Compartilhado com o BE** (`docs/architecture/backend/services/jrny-service/_brief.md`). O FE
+> consome a mesma linguagem ubíqua e os mesmos contratos (`/api/v1/journeys/**`, `/api/v1/routing/**`,
+> eventos, permissões `jrny.*`); aqui o recorte é a **experiência do usuário** (telas, fluxos, estado
+> de UI) sobre a API do `jrny-service`.
+> Módulo de **orquestração de jornada** (`type: standard`) — o **mais complexo** do FE. Depende de
+> WRKS (auth/empresa/RBAC) e consome leitura de LEAD/ASST/COMM (referências). **Decide e sinaliza**,
+> não executa: a UI desenha jornadas/regras e **lê** decisões de roteamento; a execução (mensagem,
+> oferta) é de COMM/SALE.
+
+| # | Item | Conteúdo |
+|---|------|----------|
+| 1 | **Nome canônico / Prefixo** | module `jrny` / **JRNY** · app lazy `apps/jrny` · libs `libs/jrny/*` · Nx scope `scope:jrny` · npmScope `@journeyos` · issue prefix `FE-JRNY-NNN` |
+| 2 | **Problema que resolve (UX)** | Marina (Head de Growth) qualifica leads (LEAD), mas o "depois" vive em automações soltas de e-mail/WhatsApp — **sem visão de jornada, sem regras versionadas e sem trilha de por que um lead foi para um caminho e não outro**. O FE JRNY dá a **superfície única** para: desenhar **jornadas** multi-estágio (Journey Builder), versionar **regras de roteamento** (Routing Engine), e **auditar cada decisão** ("por que este lead está neste estágio?") via decision log explicável. Rafael publica/aprova a estratégia de funil; Lucas (SDR) vê em que estágio cada lead está e por quê. O resultado é um funil **explícito, governável e auditável** — não mais implícito na cabeça das pessoas. |
+| 3 | **Persona principal / secundária** | **Principal:** `HEAD_GROWTH` (Marina) — desenha jornadas e estágios, define/versiona regras de roteamento, acompanha o funil e a saúde do roteamento. **Secundária:** `INFOPRODUTOR` (Rafael) — **autoridade de publicação**: aprova/publica/arquiva jornadas (estratégia de funil). **Terciária (leitura):** `SDR` (Lucas) — vê o estado de jornada do lead + a decisão que o colocou ali; restrito por `data_scope`. **Consumidores-máquina:** LEAD dispara roteamento (eventos), COMM/SALE reagem ao estágio — **fora** da UI JRNY. |
+| 4 | **Recorte do MVP (in)** | (a) **Lista de jornadas** (`feature-journey-list`): jornadas por estado (`RASCUNHO`/`PUBLICADA`/`ARQUIVADA`) + busca; criar rascunho; abrir builder (`GET/POST /journeys`). (b) **Journey Builder** (`feature-journey-builder`): editar jornada `RASCUNHO` — estágios **ordenados/tipados** (`CAPTURA`…`POS_VENDA`), adicionar/reordenar/remover; máquina de estados `publicar`/`arquivar`/`nova-versão`. (c) **Editor de estágio** (`feature-stage-editor`): tipo, nome, `assetRef` (conteúdo ASST), `terminal`, config. (d) **Routing Engine / regras** (`feature-routing-engine`): CRUD de `regra_roteamento` **versionadas** (condição sobre score/segmento/atributo; origem→destino; prioridade); ativar/desativar. (e) **Decision log** (`feature-decision-log`): estado de jornada do lead + **trilha imutável** de decisões ("por quê?": gatilho, regra, alvo, **badge assist IA**, motivo). (f) **Journey analytics** (`feature-journey-analytics`, read-only): funil por estágio + telemetria de transições (`journey-events`). (g) **Guards** (`authGuard`, `empresaGuard`, `accessGuard('jrny.*')`). |
+| 5 | **Fora de escopo (MVP)** | **Canvas drag-and-drop livre estilo BPMN** — MVP usa **editor estruturado de estágios ordenados** (lista/stepper com reordenação), não um canvas de grafo arbitrário (ver ADR-005); **execução** das ações de estágio (envio de mensagem = **COMM**, criação de oportunidade = **SALE**; JRNY só decide/sinaliza); **editor visual de condições** de regra (MVP usa formulário estruturado + expressão validada, espelha a gramática de snapshot do BE); **A/B testing** de jornadas/variantes; **agendamento por tempo / delays complexos** (MVP é dirigido por evento); **comando "rotear este lead agora"** (não há endpoint de execução de roteamento — roteamento é assíncrono, dirigido por eventos de LEAD); ML próprio de roteamento (inteligência vem da TechLab AI `orchestration`, BE-side). |
+| 6 | **Integrações externas obrigatórias** | **`jrny-service` via `@journeyos/shared/access-http-base`** (todas as chamadas `/api/v1/journeys/**`, `/api/v1/routing/**`; header `X-Empresa-Id`/JWT automáticos). O **assist de IA** do roteamento (`orchestration`) é **inteiramente BE-side** — o FE **nunca** chama IA; apenas **reflete** se a decisão usou assist (`assistIa=true|false`) e renderiza a degradação determinística como **badge neutro**, jamais como erro. **Referências de leitura** a ASST (asset publicado no estágio, via campo `assetRefId`) e a LEAD (lead no decision log) são resolvidas pelo BE/cross-link — sem chamada FE cross-módulo. Sem widgets 3rd-party de canvas no MVP. |
+| 7 | **Serviços do Hub (deps FE)** | `@journeyos/shared/auth-session` (sessão/JWT — **obrigatório**), `@journeyos/shared/empresa-context` (empresa ativa — **obrigatório**), `@journeyos/shared/access-decision` (`AccessDecisionService` + `NavigationService` — **obrigatório**), `@journeyos/shared/access-http-base` (HTTP + interceptors — **obrigatório**), `@journeyos/shared/ui-components` · `ui-feedback` · `ui-tokens` (sempre), `@journeyos/shared/error-model` (mapear `ProblemDetail` → `AppError`), `@journeyos/shared/observability` (recomendado — latência do builder, tempo até publicar, taxa de uso de assist no roteamento). Candidatos a **patterns shared**: smart-table (jornadas/regras/decisões), stepper/sortable-list (estágios), timeline (decision log). JRNY **não** depende de nenhum outro módulo de domínio no FE (referências a ASST/LEAD são por id, resolvidas pelo BE). |
+| 8 | **Evento-âncora do domínio (UX)** | **"Lead roteado"** (`journey-os.lead.roteado`, espelhado na UI) — o golden path do FE tem **dois lados**: (i) **autoria** — *listar jornadas → abrir/criar rascunho → desenhar estágios ordenados → definir regras de roteamento → publicar*; (ii) **auditoria** — *abrir um lead → ver seu estágio corrente → ler a trilha de decisões ("por que está aqui?": regra disparada, snapshot, badge assist IA, motivo)*. O momento de UI mais crítico é o **decision log explicável**: como no LEAD, a UI nunca apresenta o resultado do roteamento como caixa-preta — sempre mostra **gatilho + regra + alvo + assist IA + motivo**, e a indisponibilidade da IA é badge neutro, não erro. |
+
+---
+
+## Notas de contexto (Journey OS · FE)
+
+- **Stack:** Angular 18+ · Nx 19+ · TypeScript strict · Signals-first (sem NgRx) · Standalone + OnPush · Jest (unit) · Playwright (e2e). npmScope `@journeyos`.
+- **Padrão canônico:** `module-pattern` (slicing de libs por módulo — ver CLAUDE.md). App lazy em `apps/jrny`, libs em `libs/jrny/{access,data-access,feature-*,integration,navigation,ui,styles}`.
+- **Decide e sinaliza, não executa (FE):** a UI JRNY **desenha** (jornadas/estágios/regras) e **lê** (estado de jornada + decisões). Não há tela que dispara mensagem ou cria oportunidade — isso é COMM/SALE. Não há botão "rotear agora" (roteamento é assíncrono, dirigido por evento no BE).
+- **Decisão explicável é o produto, nunca caixa-preta (FE):** toda exibição de decisão de roteamento mostra **gatilho + regra (versão) + alvo + assist IA + motivo**. Espelha o princípio do LEAD (score explicável). A UI nunca apresenta só o estágio-alvo sem o "por quê".
+- **IA é assist BE-side, refletido na UI:** falha/timeout da IA não é erro do FE — o BE decide deterministicamente e marca `assistIa=false`; a UI mostra um badge **neutro** ("roteamento determinístico"), nunca toast/estado de erro (degradação graciosa, espelha a capability `orchestration` opcional).
+- **Jornada publicada é imutável em runtime:** a UI **trava edição** de jornada `PUBLICADA` (edição só via **nova versão**); espelha `409 jrny.jornada.transicao-invalida`. Estágios/regras só editáveis em `RASCUNHO`.
+- **Multi-empresa:** toda jornada/regra/decisão é escopada por `empresaId` ativo (via `EmpresaContextService`); troca de empresa **invalida** jornadas/builder em tela antes de mostrar os da nova empresa (sem vazamento cross-empresa).
+- **Type:** `standard` (autopilot) → A5 (e2e-validate) **aplicável** (specs Playwright gerados do SPEC-08).
+
+## Referências canônicas consumidas
+
+- `docs/architecture/backend/services/jrny-service/_brief.md` — brief BE (espelho)
+- `docs/architecture/backend/services/jrny-service/{01,03}-*.md` — vision + domain framing BE
+- `docs/architecture/backend/services/jrny-service/contracts/api-contract.md` — superfície REST `/api/v1/journeys/**`, `/api/v1/routing/**`
+- `docs/architecture/backend/services/jrny-service/adr/ADR-005-routing-engine-model.md` — modelo do Routing Engine (regras versionadas + decision log)
+- `docs/architecture/frontend/standards/nx-boundaries.md` — tags + direções permitidas
+- `docs/architecture/frontend/standards/access-layer-contracts.md` — contratos da Access Layer
+- `docs/architecture/shared/blueprint-core.md` — modelo mental App + módulos + shared

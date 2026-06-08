@@ -1,0 +1,44 @@
+@startuml wrks-c4-component
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+title WRKS — Components (hexagonal)
+
+Container_Boundary(api, "api") {
+  Component(sessaoCtrl, "SessaoController", "/sessao/*")
+  Component(accessCtrl, "AccessController", "/access/evaluate, /.well-known/jwks.json")
+  Component(adminCtrl, "Admin controllers", "/empresas /usuarios /papeis /business-units /teams /auditoria")
+  Component(advice, "IamExceptionHandler", "@RestControllerAdvice → ProblemDetail")
+}
+Container_Boundary(app, "application") {
+  Component(loginUC, "LoginService", "OIDC→JWT, session policy")
+  Component(switchUC, "TrocarEmpresaService", "")
+  Component(evalUC, "AvaliarAcessoService", "AccessDecision + cache")
+  Component(rbacUC, "GerenciarPapelService", "bump versão + publish")
+  Component(provUC, "ProvisionarEmpresaService", "trigger MIG (saga)")
+  Component(auditUC, "RegistrarAuditoriaService", "consume journey-os.*")
+  Component(ports, "ports.in / ports.out", "interfaces")
+}
+Container_Boundary(domain, "domain") {
+  Component(rbacDomain, "RbacPolicy / AntiEscalation", "")
+  Component(sessionDomain, "SessionPolicy", "")
+  Component(models, "Usuario/Papel/Empresa/AccessDecision", "POJO")
+}
+Container_Boundary(infra, "infrastructure") {
+  Component(jpa, "persistence (entity/repo/adapter)", "")
+  Component(jwt, "security (JWT RS256, EmpresaContext filter)", "")
+  Component(cache, "redis adapters", "")
+  Component(msg, "messaging (producer/consumer Kafka)", "")
+  Component(clients, "clients (MIG Feign, Keycloak)", "")
+}
+
+Rel(sessaoCtrl, loginUC, "")
+Rel(accessCtrl, evalUC, "")
+Rel(adminCtrl, rbacUC, "")
+Rel(adminCtrl, provUC, "")
+Rel(loginUC, sessionDomain, "")
+Rel(rbacUC, rbacDomain, "")
+Rel(evalUC, cache, "ports.out")
+Rel(provUC, clients, "ports.out")
+Rel(auditUC, msg, "consume")
+Rel(loginUC, jwt, "issue token")
+Rel(ports, jpa, "")
+@enduml

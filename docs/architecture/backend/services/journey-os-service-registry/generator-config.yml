@@ -1,0 +1,14 @@
+# generator-config.yml — contract for scripts/be-module-generator.py
+# Module: REG (Service Registry) — infra/registry.
+# For type=registry only the three top-level fields apply (no domain/services/events).
+service: journey-os-service-registry
+type: registry
+port: 8761
+# bounded_context drives the base package suffix: com.journeyos.<bounded_context>.
+# Required for infra services whose name does not end in "-service", otherwise the
+# generator squashes the full service name (→ com.journeyos.journeyosserviceregistry),
+# violating RULE-09 (canonical package com.journeyos.reg per services-catalog.md).
+bounded_context: reg
+# issue_prefix must be explicit: issues live in a shared GLOBAL dir, so auto-scan is
+# ambiguous (would pick up MIG/GWY/etc.). Pin it to REG.
+issue_prefix: REG

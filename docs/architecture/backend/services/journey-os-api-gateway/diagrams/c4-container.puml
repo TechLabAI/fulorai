@@ -1,0 +1,30 @@
+@startuml gwy-c4-container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title C4 Container — GWY (API Gateway) · Journey OS
+
+Person(spa, "SPA / Integrações", "Clientes da API")
+
+System_Boundary(gwy_s, "journey-os-api-gateway") {
+  Container(gw, "Gateway (WebFlux)", "Java 21 / Spring Cloud Gateway", "Pipeline de GlobalFilters + RouteLocator; stateless")
+  Container(filters, "Edge Filters", "Reativo", "Correlation, SecurityHeaderStrip, Auth(JWT), TenantPropagation, RateLimit")
+}
+
+System_Ext(reg, "Eureka (REG)", "journey-os-service-registry")
+System_Ext(wrks, "WRKS", "JWKS / emissor de JWT")
+SystemDb_Ext(redis, "Redis", "Backing store rate-limit")
+System_Ext(biz, "Serviços de negócio", "lb://lead-service, lb://jrny-service, ...")
+
+Rel(spa, gw, "HTTP", "/api/v1/**, /auth/**, /webhooks/**")
+Rel(gw, filters, "Aplica em ordem")
+Rel(gw, reg, "DiscoveryClient RouteLocator", "lb://")
+Rel(filters, wrks, "Valida assinatura via JWKS (cache)", "HTTPS")
+Rel(filters, redis, "RequestRateLimiter", "RESP")
+Rel(gw, biz, "Encaminha c/ X-Empresa-Id, X-Correlation-Id", "HTTP")
+
+note right of gw
+  Sem PostgreSQL, sem JPA, sem Kafka.
+  Não depende de journey-os-migrations.
+end note
+
+@enduml

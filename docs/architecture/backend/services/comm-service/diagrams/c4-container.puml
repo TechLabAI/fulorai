@@ -1,0 +1,32 @@
+@startuml comm-c4-container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+title COMM — Containers (comm-service)
+
+System_Boundary(comm, "comm-service (com.journeyos.comm)") {
+  Container(api, "API layer", "Spring MVC", "Template/Studio/Mensagem/Roteamento/Canal/Webhook controllers")
+  Container(app, "Application layer", "Spring @Service", "Use cases + ports (dispatch, routing, studio, config)")
+  Container(domain, "Domain layer", "POJO", "Template, Mensagem, EventoEntrega, RegraRoteamento, ConfigCanal, state machine — zero Spring/JPA")
+  Container(infra, "Infrastructure", "Adapters", "JPA, Feign(WRKS/ASST), TechLabAiClient, channel adapters, Kafka/outbox, Elastic, security")
+}
+
+System(wrks, "WRKS", "AccessDecision + JWKS")
+System(asst, "ASST", "AssetQueryClient")
+System_Ext(techlab, "TechLab AI", "document_composition")
+System_Ext(providers, "Provedores de canal", "Meta/SES/Telegram/Twilio")
+SystemDb_Ext(pg, "PostgreSQL", "emp_<slug>")
+System_Ext(elastic, "Elasticsearch", "índice communication-events")
+System_Ext(kafka, "Kafka (AWS MSK)", "eventos + dispatch outbox")
+System(eureka, "REG (Eureka)", "discovery")
+
+Rel(api, app, "invoca use cases (ports in)")
+Rel(app, domain, "aplica regras de domínio")
+Rel(app, infra, "ports out → adapters")
+Rel(infra, pg, "JPA (ddl-auto=validate)")
+Rel(infra, wrks, "Feign AccessEvaluateClient", "HTTP")
+Rel(infra, asst, "Feign AssetQueryClient", "HTTP")
+Rel(infra, techlab, "TechLabAiClient (Resilience4j)", "HTTP")
+Rel(infra, providers, "Channel adapters (CanalEnvioPort, Resilience4j)", "HTTP")
+Rel(infra, elastic, "direct java client")
+Rel(infra, kafka, "producer/consumer + dispatch worker (outbox)")
+Rel(infra, eureka, "registro/descoberta")
+@enduml

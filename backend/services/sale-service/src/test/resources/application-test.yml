@@ -1,0 +1,13 @@
+# Profile 'test' — Testcontainers (PostgreSQL) + Artemis embedded.
+# DataSource sobrescrito via @DynamicPropertySource em BaseIntegrationTest.
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  flyway:
+    enabled: false
+  artemis:
+    mode: embedded
+eureka:
+  client:
+    enabled: false

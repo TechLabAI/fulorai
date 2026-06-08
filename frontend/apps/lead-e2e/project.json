@@ -1,0 +1,20 @@
+{
+  "name": "lead-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/lead-e2e/src",
+  "tags": ["scope:lead", "type:e2e"],
+  "implicitDependencies": ["lead"],
+  "targets": {
+    "e2e": {
+      "executor": "@nx/playwright:playwright",
+      "outputs": ["{workspaceRoot}/dist/.playwright/apps/lead-e2e"],
+      "options": {
+        "config": "apps/lead-e2e/playwright.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

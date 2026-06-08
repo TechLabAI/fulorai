@@ -1,0 +1,36 @@
+@startuml sale-c4-component
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+title SALE — Components (com.journeyos.sale)
+
+Container_Boundary(api, "api") {
+  Component(ctrl, "Controllers", "@RestController", "Oportunidade/Oferta/Compra/Atribuicao/Ltv")
+  Component(dto, "DTOs", "records", "request/response")
+  Component(adv, "ExceptionAdvice", "@RestControllerAdvice", "ProblemDetail (RFC 7807)")
+}
+Container_Boundary(app, "application") {
+  Component(uc, "Use cases", "@Service @Transactional", "pipeline, purchase, attribution, ltv")
+  Component(pin, "port.in", "interfaces", "inbound use cases")
+  Component(pout, "port.out", "interfaces", "OportunidadeRepositoryPort, CompraRepositoryPort, OfertaRepositoryPort, ModeloAtribuicaoRepositoryPort, LtvRepositoryPort, SaleSearchPort, SaleEventPublisherPort")
+}
+Container_Boundary(dom, "domain") {
+  Component(model, "model", "POJO", "Oportunidade, Oferta, Compra, Atribuicao, Ltv")
+  Component(dsvc, "service", "POJO", "PipelineService, AttributionEngine, LtvCalculator")
+}
+Container_Boundary(inf, "infrastructure") {
+  Component(persist, "persistence", "JPA", "entity/repository/adapter")
+  Component(msg, "messaging", "Kafka", "producer + consumer (lead.*, empresa.*)")
+  Component(search, "search", "Elastic", "revenue-events, campaign-events")
+  Component(sec, "security", "Spring Security", "JWT filter, EmpresaContextHolder, MDC")
+  Component(cfg, "config", "@Configuration", "DomainServiceConfig, Resilience4j, Feign")
+}
+
+Rel(ctrl, uc, "invoca")
+Rel(ctrl, dto, "usa")
+Rel(uc, pin, "implementa")
+Rel(uc, dsvc, "usa regras")
+Rel(uc, pout, "depende")
+Rel(persist, pout, "implementa repos")
+Rel(msg, pout, "implementa publisher")
+Rel(search, pout, "implementa search")
+Rel(cfg, dsvc, "@Bean dos domain services")
+@enduml

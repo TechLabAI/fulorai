@@ -1,0 +1,27 @@
+@startuml lead-c4-context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+title LEAD — System Context (Lead Intelligence & Qualification)
+
+Person(growth, "Marina (HEAD_GROWTH)", "Desenha regras/segmentos; monitora Maturity Score")
+Person(sdr, "Lucas (SDR)", "Consome a fila priorizada de leads qualificados")
+
+System(lead, "lead-service", "Captura, perfil, surveys, Maturity Score (6D), segmentação")
+
+System(gwy, "GWY (API Gateway)", "Valida JWT (JWKS), roteia")
+System(wrks, "WRKS", "AccessDecision + JWKS + eventos empresa/modelo-acesso")
+System_Ext(techlab, "TechLab AI", "Capacidade qualification (assist opcional, fallback)")
+SystemDb_Ext(pg, "PostgreSQL + pgvector", "schema emp_<slug>")
+System_Ext(kafka, "Kafka (AWS MSK)", "eventos lead.*")
+System_Ext(elastic, "Elasticsearch", "índice leads (fila/segmentação)")
+System(downstream, "JRNY / SALE / COMM / INTL", "Consomem lead.qualificado / score / segmento")
+
+Rel(growth, gwy, "Regras, segmentos, monitoramento", "HTTPS")
+Rel(sdr, gwy, "Consulta fila priorizada", "HTTPS")
+Rel(gwy, lead, "Roteia /api/v1/leads|surveys|qualification|segments; valida JWT")
+Rel(lead, wrks, "POST /access/evaluate (autorização)", "HTTP/Feign")
+Rel(lead, techlab, "qualification (assist ao score)", "HTTP")
+Rel(lead, pg, "Lê/escreve emp_<slug>")
+Rel(lead, kafka, "Publica lead.* / consome empresa.provisionada + modelo.acesso.alterado")
+Rel(lead, elastic, "Indexa leads")
+Rel(downstream, kafka, "Consomem eventos lead.*")
+@enduml

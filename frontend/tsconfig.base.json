@@ -1,0 +1,173 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "ES2022",
+    "module": "ES2022",
+    "lib": ["ES2022", "dom"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@journeyos/asst": ["libs/asst/shell-entry/src/index.ts"],
+      "@journeyos/comm": ["libs/comm/shell-entry/src/index.ts"],
+      "@journeyos/internal": ["libs/internal-nx-plugin/internal/src/index.ts"],
+      "@journeyos/intl": ["libs/intl/shell-entry/src/index.ts"],
+      "@journeyos/jrny": ["libs/jrny/shell-entry/src/index.ts"],
+      "@journeyos/lead": ["libs/lead/shell-entry/src/index.ts"],
+      "@journeyos/sale": ["libs/sale/shell-entry/src/index.ts"],
+      "@journeyos/shared/access-decision": [
+        "libs/shared/access-decision/src/index.ts"
+      ],
+      "@journeyos/shared/access-http-base": [
+        "libs/shared/access-http-base/src/index.ts"
+      ],
+      "@journeyos/shared/auth-session": [
+        "libs/shared/auth-session/src/index.ts"
+      ],
+      "@journeyos/shared/empresa-context": [
+        "libs/shared/empresa-context/src/index.ts"
+      ],
+      "@journeyos/shared/error-model": ["libs/shared/error-model/src/index.ts"],
+      "@journeyos/shared/observability": [
+        "libs/shared/observability/src/index.ts"
+      ],
+      "@journeyos/shared/ui-components": [
+        "libs/shared/ui-components/src/index.ts"
+      ],
+      "@journeyos/shared/ui-feedback": ["libs/shared/ui-feedback/src/index.ts"],
+      "@journeyos/shared/ui-tokens": ["libs/shared/ui-tokens/src/index.ts"],
+      "@journeyos/wrks": ["libs/wrks/shell-entry/src/index.ts"],
+      "asst-access": ["libs/asst/access/src/index.ts"],
+      "asst-data-access": ["libs/asst/data-access/src/index.ts"],
+      "asst-feature-approval-workflow": [
+        "libs/asst/feature-approval-workflow/src/index.ts"
+      ],
+      "asst-feature-asset-detail": [
+        "libs/asst/feature-asset-detail/src/index.ts"
+      ],
+      "asst-feature-asset-library": [
+        "libs/asst/feature-asset-library/src/index.ts"
+      ],
+      "asst-feature-asset-studio": [
+        "libs/asst/feature-asset-studio/src/index.ts"
+      ],
+      "asst-integration": ["libs/asst/integration/src/index.ts"],
+      "asst-navigation": ["libs/asst/navigation/src/index.ts"],
+      "asst-styles": ["libs/asst/styles/src/index.ts"],
+      "asst-ui": ["libs/asst/ui/src/index.ts"],
+      "comm-access": ["libs/comm/access/src/index.ts"],
+      "comm-data-access": ["libs/comm/data-access/src/index.ts"],
+      "comm-feature-channel-config": [
+        "libs/comm/feature-channel-config/src/index.ts"
+      ],
+      "comm-feature-messages": ["libs/comm/feature-messages/src/index.ts"],
+      "comm-feature-routing-rules": [
+        "libs/comm/feature-routing-rules/src/index.ts"
+      ],
+      "comm-feature-template-catalog": [
+        "libs/comm/feature-template-catalog/src/index.ts"
+      ],
+      "comm-feature-template-studio": [
+        "libs/comm/feature-template-studio/src/index.ts"
+      ],
+      "comm-integration": ["libs/comm/integration/src/index.ts"],
+      "comm-navigation": ["libs/comm/navigation/src/index.ts"],
+      "comm-styles": ["libs/comm/styles/src/index.ts"],
+      "comm-ui": ["libs/comm/ui/src/index.ts"],
+      "intl-access": ["libs/intl/access/src/index.ts"],
+      "intl-data-access": ["libs/intl/data-access/src/index.ts"],
+      "intl-feature-analytics": ["libs/intl/feature-analytics/src/index.ts"],
+      "intl-feature-copilot": ["libs/intl/feature-copilot/src/index.ts"],
+      "intl-feature-knowledge": ["libs/intl/feature-knowledge/src/index.ts"],
+      "intl-integration": ["libs/intl/integration/src/index.ts"],
+      "intl-navigation": ["libs/intl/navigation/src/index.ts"],
+      "intl-styles": ["libs/intl/styles/src/index.ts"],
+      "intl-ui": ["libs/intl/ui/src/index.ts"],
+      "jrny-access": ["libs/jrny/access/src/index.ts"],
+      "jrny-data-access": ["libs/jrny/data-access/src/index.ts"],
+      "jrny-feature-decision-log": [
+        "libs/jrny/feature-decision-log/src/index.ts"
+      ],
+      "jrny-feature-journey-analytics": [
+        "libs/jrny/feature-journey-analytics/src/index.ts"
+      ],
+      "jrny-feature-journey-builder": [
+        "libs/jrny/feature-journey-builder/src/index.ts"
+      ],
+      "jrny-feature-journey-list": [
+        "libs/jrny/feature-journey-list/src/index.ts"
+      ],
+      "jrny-feature-routing-engine": [
+        "libs/jrny/feature-routing-engine/src/index.ts"
+      ],
+      "jrny-feature-stage-editor": [
+        "libs/jrny/feature-stage-editor/src/index.ts"
+      ],
+      "jrny-integration": ["libs/jrny/integration/src/index.ts"],
+      "jrny-navigation": ["libs/jrny/navigation/src/index.ts"],
+      "jrny-styles": ["libs/jrny/styles/src/index.ts"],
+      "jrny-ui": ["libs/jrny/ui/src/index.ts"],
+      "lead-access": ["libs/lead/access/src/index.ts"],
+      "lead-data-access": ["libs/lead/data-access/src/index.ts"],
+      "lead-feature-lead-detail": [
+        "libs/lead/feature-lead-detail/src/index.ts"
+      ],
+      "lead-feature-lead-list": ["libs/lead/feature-lead-list/src/index.ts"],
+      "lead-feature-maturity-score": [
+        "libs/lead/feature-maturity-score/src/index.ts"
+      ],
+      "lead-feature-qualification-rules": [
+        "libs/lead/feature-qualification-rules/src/index.ts"
+      ],
+      "lead-feature-segmentation": [
+        "libs/lead/feature-segmentation/src/index.ts"
+      ],
+      "lead-feature-survey": ["libs/lead/feature-survey/src/index.ts"],
+      "lead-integration": ["libs/lead/integration/src/index.ts"],
+      "lead-navigation": ["libs/lead/navigation/src/index.ts"],
+      "lead-styles": ["libs/lead/styles/src/index.ts"],
+      "lead-ui": ["libs/lead/ui/src/index.ts"],
+      "sale-access": ["libs/sale/access/src/index.ts"],
+      "sale-data-access": ["libs/sale/data-access/src/index.ts"],
+      "sale-feature-attribution": [
+        "libs/sale/feature-attribution/src/index.ts"
+      ],
+      "sale-feature-offer": ["libs/sale/feature-offer/src/index.ts"],
+      "sale-feature-opportunity": [
+        "libs/sale/feature-opportunity/src/index.ts"
+      ],
+      "sale-feature-pipeline": ["libs/sale/feature-pipeline/src/index.ts"],
+      "sale-feature-purchase": ["libs/sale/feature-purchase/src/index.ts"],
+      "sale-feature-revenue-dashboard": [
+        "libs/sale/feature-revenue-dashboard/src/index.ts"
+      ],
+      "sale-integration": ["libs/sale/integration/src/index.ts"],
+      "sale-navigation": ["libs/sale/navigation/src/index.ts"],
+      "sale-styles": ["libs/sale/styles/src/index.ts"],
+      "sale-ui": ["libs/sale/ui/src/index.ts"],
+      "wrks-access": ["libs/wrks/access/src/index.ts"],
+      "wrks-data-access": ["libs/wrks/data-access/src/index.ts"],
+      "wrks-feature-empresa-select": [
+        "libs/wrks/feature-empresa-select/src/index.ts"
+      ],
+      "wrks-feature-login": ["libs/wrks/feature-login/src/index.ts"],
+      "wrks-feature-rbac-viewer": [
+        "libs/wrks/feature-rbac-viewer/src/index.ts"
+      ],
+      "wrks-feature-users": ["libs/wrks/feature-users/src/index.ts"],
+      "wrks-feature-workspace": ["libs/wrks/feature-workspace/src/index.ts"],
+      "wrks-integration": ["libs/wrks/integration/src/index.ts"],
+      "wrks-navigation": ["libs/wrks/navigation/src/index.ts"],
+      "wrks-styles": ["libs/wrks/styles/src/index.ts"],
+      "wrks-ui": ["libs/wrks/ui/src/index.ts"]
+    }
+  },
+  "_TODO_lote_6a": "extend paths as additional libs (feature/data-access/ui) are scaffolded"
+}

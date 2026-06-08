@@ -1,0 +1,72 @@
+{
+  "_schema_version": 1,
+  "version": "1.0.0",
+  "last_changed": "2026-05-25",
+  "convention": {
+    "format": "<module>.<resource>.<action>",
+    "note": "Snake/kebab case, lowercase. Wildcards prohibited in production seeds — individual rows per permission for auditing. Some 4-part codes are intentional (e.g. cad.vendedor.comissao.config) when a resource has natural sub-resources."
+  },
+  "modules": [
+    {
+      "prefix": "wrks",
+      "name": "Workspace & Identity",
+      "description": "Multi-tenancy, business units, teams, users, RBAC, administration",
+      "permissions": []
+    },
+    {
+      "prefix": "lead",
+      "name": "Lead Intelligence & Qualification",
+      "description": "Leads, perfil, segmentação, Maturity Score (6D), surveys, qualification rules",
+      "permissions": []
+    },
+    {
+      "prefix": "jrny",
+      "name": "Journey & Routing",
+      "description": "Jornadas, estágios, Journey Builder, Routing Engine, decision log",
+      "permissions": []
+    },
+    {
+      "prefix": "asst",
+      "name": "Asset Hub",
+      "description": "Assets, Asset Studio, versionamento, approval workflow, Asset Intelligence",
+      "permissions": []
+    },
+    {
+      "prefix": "comm",
+      "name": "Communication Hub",
+      "description": "WhatsApp/Email/Telegram/SMS via integração, templates, message routing",
+      "permissions": []
+    },
+    {
+      "prefix": "sale",
+      "name": "Sales & Revenue",
+      "description": "CRM (pipeline/SDR/closer), ofertas, compras, attribution, LTV",
+      "permissions": []
+    },
+    {
+      "prefix": "intl",
+      "name": "Intelligence & Platform",
+      "description": "AI Copilot + Knowledge, Event Platform, Integrations, Observabilidade/indexação Elastic",
+      "permissions": []
+    },
+    {
+      "prefix": "gwy",
+      "name": "API Gateway",
+      "description": "Spring Cloud Gateway — routing, auth, rate-limit",
+      "permissions": []
+    },
+    {
+      "prefix": "reg",
+      "name": "Service Registry",
+      "description": "Eureka service discovery",
+      "permissions": []
+    },
+    {
+      "prefix": "mig",
+      "name": "Migrations",
+      "description": "Centralized Flyway DB migrations",
+      "permissions": []
+    }
+  ],
+  "$comment": "Workspace ships with empty modules (D-103, Gap B). See _examples/eerripe-permission-catalogue.partial.json for the BOSQ-ERP starting catalogue. New projects: declare your modules via arch/overrides/permission-catalogue.partial.json."
+}

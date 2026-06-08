@@ -1,0 +1,125 @@
+# Generator config — SALE (Frontend) · input do @journeyos/internal:module (scaffold A4)
+# Fonte: SPEC-01..08 + _brief.md. Naming canônico module-pattern; npmScope @journeyos.
+module: sale
+issue_prefix: FE-SALE
+nx_scope: sale
+npm_scope: "@journeyos"
+shell_route: /sale
+type: standard
+state_management: signals
+foundation: false   # SALE é módulo de domínio núcleo; depende de WRKS (auth) + Access Layer
+
+features:
+  - name: pipeline
+    lib: feature-pipeline
+    routes: [/sale/pipeline]
+    components: [SalePipelinePageComponent, PipelineToolbarComponent, PipelineBoardComponent, PipelineColumnComponent, OpportunityCardComponent, CreateOpportunityDialogComponent]
+    permission: sale.oportunidade.read
+  - name: opportunity
+    lib: feature-opportunity
+    routes: [/sale/opportunities/:id]
+    components: [OpportunityDetailPageComponent, OpportunityHeaderComponent, StageHistoryTimelineComponent, StageHistoryItemComponent, WinOpportunityButtonComponent, LoseOpportunityDialogComponent]
+    permission: sale.oportunidade.read
+  - name: offer
+    lib: feature-offer
+    routes: [/sale/offers, /sale/offers/:id]
+    components: [OfferListPageComponent, OfferFilterBarComponent, OfferRowComponent, CreateOfferDialogComponent, OfferDetailPageComponent, OfferVersionListComponent, OfferFormComponent, DeactivateOfferButtonComponent]
+    permission: sale.oferta.read
+  - name: purchase
+    lib: feature-purchase
+    routes: [/sale/purchases, /sale/purchases/:id]
+    components: [PurchaseListPageComponent, PurchaseFilterBarComponent, PurchaseRowComponent, PurchaseDetailPageComponent, PurchaseSummaryComponent, PurchaseItemsTableComponent, AttributionBreakdownComponent, PurchaseAdjustActionsComponent]
+    permission: sale.compra.read
+  - name: attribution
+    lib: feature-attribution
+    routes: [/sale/attribution]
+    components: [AttributionPageComponent, AttributionModelListComponent, AttributionModelRowComponent, CreateAttributionModelDialogComponent, AttributionBreakdownPreviewComponent]
+    permission: sale.atribuicao.read
+  - name: revenue-dashboard
+    lib: feature-revenue-dashboard
+    routes: [/sale/dashboard]
+    components: [RevenueDashboardPageComponent, RevenueFunnelChartComponent, RevenuePeriodFilterComponent, LtvTopContactsTableComponent]
+    permission: sale.ltv.read
+
+data_access:
+  - resource: Oportunidade
+    base_path: /api/v1/oportunidades
+    service: OportunidadeApiService
+    facade: PipelineFacade
+    operations: [list, get, create, moverEstagio, ganhar, perder]
+  - resource: Oferta
+    base_path: /api/v1/ofertas
+    service: OfertaApiService
+    facade: OfferListFacade
+    operations: [list, get, create, editar, desativar]
+  - resource: Compra
+    base_path: /api/v1/compras
+    service: CompraApiService
+    facade: PurchaseListFacade
+    operations: [list, get, estornar, cancelar]
+  - resource: Atribuicao
+    base_path: /api/v1/atribuicao/modelos
+    service: AtribuicaoApiService
+    facade: AttributionFacade
+    operations: [list, criar, ativar, getBreakdown]
+  - resource: Ltv
+    base_path: /api/v1/ltv
+    service: LtvApiService
+    facade: RevenueDashboardFacade
+    operations: [getByContato, list]
+
+backend_contract: ../../../../backend/services/sale-service/contracts/api-contract.md
+
+ui_libs_used:
+  - "@journeyos/shared/ui-tokens"
+  - "@journeyos/shared/ui-components"
+  - "@journeyos/shared/ui-feedback"
+
+access_libs_used:
+  - "@journeyos/shared/auth-session"
+  - "@journeyos/shared/empresa-context"
+  - "@journeyos/shared/access-decision"
+  - "@journeyos/shared/access-http-base"
+  - "@journeyos/shared/error-model"
+
+optional_libs:
+  - "@journeyos/shared/observability"
+
+extra_dependencies:
+  - "@angular/cdk"   # CDK DragDrop — Kanban do feature-pipeline (ADR-005)
+
+module_contract:
+  key: sale
+  label: Vendas
+  icon: monetization_on
+  permissions:
+    - sale.oportunidade.read
+    - sale.oportunidade.criar
+    - sale.oportunidade.mover
+    - sale.oportunidade.fechar
+    - sale.oferta.read
+    - sale.oferta.criar
+    - sale.oferta.editar
+    - sale.oferta.desativar
+    - sale.compra.read
+    - sale.compra.estornar
+    - sale.compra.cancelar
+    - sale.atribuicao.read
+    - sale.atribuicao.criar
+    - sale.atribuicao.ativar
+    - sale.ltv.read
+  feature_flags:
+    - { key: sale.revenue-dashboard, defaultState: enabled }
+    - { key: sale.attribution-multitouch, defaultState: disabled }
+
+e2e:
+  features_path: docs/architecture/frontend/modules/sale/frontend/e2e/
+  features:
+    - pipeline-kanban-move.feature
+    - opportunity-win-loss.feature
+    - offer-versioning.feature
+    - purchase-attribution-breakdown.feature
+    - attribution-model-activate.feature
+    - empresa-switch-isolation.feature
+    - entitlement-denied.feature
+    - deep-link.feature

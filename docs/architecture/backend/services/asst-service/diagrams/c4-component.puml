@@ -1,0 +1,48 @@
+@startuml asst-c4-component
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+title ASST — Components (hexagonal layers)
+
+Container_Boundary(api, "api") {
+  Component(ctrlAsset, "AssetController", "@RestController", "CRUD + busca /api/v1/assets")
+  Component(ctrlStudio, "AssetStudioController", "@RestController", "/studio/compose")
+  Component(ctrlAppr, "AssetApprovalController", "@RestController", "submit/approve/publish")
+  Component(advice, "ApiExceptionHandler", "@RestControllerAdvice", "ProblemDetail RFC7807")
+}
+
+Container_Boundary(app, "application") {
+  Component(ucCriar, "CriarAssetService", "@Service @Transactional", "")
+  Component(ucStudio, "ComporNoStudioService", "@Service @Transactional", "")
+  Component(ucFluxo, "Submeter/Aprovar/PublicarService", "@Service @Transactional", "")
+  Component(ucBuscar, "BuscarAssetsService", "@Service", "")
+  Component(portsOut, "Ports OUT", "interfaces", "AssetRepositoryPort, AssetSearchPort, ComposicaoIaPort, AccessDecisionPort, EventoPublisherPort")
+}
+
+Container_Boundary(domain, "domain") {
+  Component(mAsset, "Asset / VersaoAsset / Aprovacao", "POJO", "agregado")
+  Component(sTransicao, "TransicaoEstadoService", "domain service", "state machine + invariantes")
+}
+
+Container_Boundary(infra, "infrastructure") {
+  Component(jpa, "JPA adapters", "persistence", "entity/repository/adapter (emp_<slug>)")
+  Component(feignWrks, "AccessEvaluateClient", "@FeignClient", "WRKS")
+  Component(techlab, "TechLabAiClient", "HTTP client", "document_composition")
+  Component(elastic, "AssetSearchAdapter", "Elastic", "índice assets")
+  Component(msg, "Kafka producer/consumer", "messaging", "outbox + idempotência")
+  Component(sec, "Security/EmpresaContextHolder", "filtros", "JWT + tenant")
+}
+
+Rel(ctrlAsset, ucCriar, "")
+Rel(ctrlStudio, ucStudio, "")
+Rel(ctrlAppr, ucFluxo, "")
+Rel(ctrlAsset, ucBuscar, "")
+Rel(ucFluxo, sTransicao, "")
+Rel(ucCriar, mAsset, "")
+Rel(ucStudio, portsOut, "ComposicaoIaPort")
+Rel(ucFluxo, portsOut, "Repository/Evento")
+Rel(ucBuscar, portsOut, "AssetSearchPort")
+Rel(portsOut, jpa, "impl")
+Rel(portsOut, techlab, "impl ComposicaoIaPort")
+Rel(portsOut, elastic, "impl AssetSearchPort")
+Rel(portsOut, msg, "impl EventoPublisherPort")
+Rel(portsOut, feignWrks, "impl AccessDecisionPort")
+@enduml

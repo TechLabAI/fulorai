@@ -1,0 +1,27 @@
+@startuml gwy-c4-context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title C4 Context — GWY (API Gateway) · Journey OS
+
+Person(spa, "SPA Angular", "journey-os-web — usuário autenticado")
+Person(ext, "Integrações externas", "Hotmart / Meta Ads / ActiveCampaign (webhooks)")
+
+System_Boundary(jos, "Journey OS") {
+  System(gwy, "API Gateway (GWY)", "Spring Cloud Gateway reativo — edge único: routing, auth, tenant, rate-limit, CORS")
+  System(reg, "Service Registry (REG)", "Eureka — descoberta de serviços")
+  System(wrks, "WRKS", "Identidade / emissor de JWT (JWKS)")
+  System(biz, "Serviços de negócio", "LEAD, JRNY, ASST, COMM, SALE, INTL")
+}
+
+System_Ext(alb, "ALB / Ingress (AWS)", "Terminação TLS, exposição pública")
+SystemDb_Ext(redis, "Redis (ElastiCache)", "Rate-limiter distribuído")
+
+Rel(spa, alb, "HTTPS")
+Rel(ext, alb, "HTTPS (webhooks)")
+Rel(alb, gwy, "HTTP", "TLS terminado")
+Rel(gwy, reg, "Descobre instâncias", "lb://")
+Rel(gwy, wrks, "Obtém JWKS p/ validar JWT", "HTTPS")
+Rel(gwy, redis, "Token bucket", "RESP")
+Rel(gwy, biz, "Encaminha /api/v1/**", "HTTP")
+
+@enduml

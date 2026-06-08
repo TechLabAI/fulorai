@@ -1,0 +1,48 @@
+@startuml c4-component-intl
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title INTL (intl-service) — C4 Component (hexagonal)
+
+Container_Boundary(api, "api") {
+  Component(copCtrl, "CopilotController", "@RestController", "/api/v1/copilot")
+  Component(knCtrl, "KnowledgeController", "@RestController", "/api/v1/knowledge")
+  Component(anCtrl, "AnalyticsController", "@RestController", "/api/v1/analytics")
+}
+
+Container_Boundary(app, "application") {
+  Component(copSvc, "CopilotService", "@Service", "RAG orchestration")
+  Component(knSvc, "KnowledgeIngestService", "@Service", "curadoria + ingestão")
+  Component(epSvc, "EventPlatformService", "@Service", "projeção + DLQ + ledger")
+  Component(anSvc, "AnalyticsService", "@Service", "leitura cross-index")
+  Component(portsOut, "Ports OUT", "interfaces", "SearchPort, IndexPort, KnowledgePort, OrchestrationPort, IntlEventPublisherPort, AccessDecisionCachePort, AssetQueryPort")
+}
+
+Container_Boundary(domain, "domain") {
+  Component(model, "Model", "POJO", "ConversaCopiloto, MensagemCopiloto, NoConhecimento, Citacao, EventoIndexado")
+  Component(dsvc, "Domain Services", "POJO", "TraceabilityValidator, RankingFundamentacaoService")
+}
+
+Container_Boundary(infra, "infrastructure") {
+  Component(jpa, "Persistence Adapters", "JPA", "emp_<slug>")
+  Component(esAdp, "Elastic Adapter", "elastic-client-lib", "SearchPort/IndexPort")
+  Component(tlClient, "TechLabAiClient", "HTTP", "knowledge/orchestration")
+  Component(feign, "Feign Clients", "Feign", "AccessEvaluate, AssetQuery")
+  Component(msg, "Messaging", "Kafka", "consumers + producer")
+  Component(sec, "Security", "Filters", "JWT, MDC, EmpresaContextHolder")
+}
+
+Rel(copCtrl, copSvc, "")
+Rel(knCtrl, knSvc, "")
+Rel(anCtrl, anSvc, "")
+Rel(copSvc, portsOut, "")
+Rel(knSvc, portsOut, "")
+Rel(epSvc, portsOut, "")
+Rel(anSvc, portsOut, "")
+Rel(copSvc, model, "")
+Rel(epSvc, dsvc, "valida rastreabilidade")
+Rel(portsOut, jpa, "impl")
+Rel(portsOut, esAdp, "impl")
+Rel(portsOut, tlClient, "impl")
+Rel(portsOut, feign, "impl")
+Rel(portsOut, msg, "impl")
+@enduml

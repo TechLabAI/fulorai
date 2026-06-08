@@ -1,0 +1,16 @@
+# generator-config.yml — GWY (API Gateway)
+# Contrato com scripts/be-module-generator.py (be-architect-scaffold).
+# type=gateway → estrutura reduzida (sem domínio/persistência/eventos).
+# Apenas os três campos do topo (+ bounded_context/issue_prefix) se aplicam a gateway.
+
+service: journey-os-api-gateway
+type: gateway
+port: 8080
+# bounded_context define o sufixo do pacote base: com.journeyos.<bounded_context>.
+# Obrigatório para serviços de infra cujo nome NÃO termina em "-service", senão o gerador
+# usa o nome completo (→ com.journeyos.journeyosapigateway), violando RULE-09
+# (pacote canônico com.journeyos.gwy, conforme services-catalog.md).
+bounded_context: gwy
+# issue_prefix explícito: as issues vivem em diretório GLOBAL compartilhado, então o
+# auto-scan é ambíguo (pegaria MIG/REG/etc.). Fixar em GWY.
+issue_prefix: GWY

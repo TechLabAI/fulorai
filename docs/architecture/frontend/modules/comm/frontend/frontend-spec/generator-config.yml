@@ -1,0 +1,118 @@
+# Generator config — COMM (Frontend) · input do @journeyos/internal:module (scaffold A4)
+# Fonte: SPEC-01..08 + _brief.md. Naming canônico module-pattern; npmScope @journeyos.
+module: comm
+issue_prefix: FE-COMM
+nx_scope: comm
+npm_scope: "@journeyos"
+shell_route: /comm
+type: standard
+state_management: signals
+foundation: false   # COMM é módulo de domínio núcleo; depende de WRKS (auth) + Access Layer
+
+features:
+  - name: template-catalog
+    lib: feature-template-catalog
+    routes: [/comm/templates, /comm/templates/:id]
+    components: [TemplateCatalogPageComponent, NewTemplateDialogComponent, TemplateEditorPageComponent]
+    permission: comm.template.ler
+  - name: template-studio
+    lib: feature-template-studio
+    routes: [/comm/templates/:id/studio]
+    components: [TemplateStudioPageComponent]
+    permission: comm.studio.compor
+  - name: routing-rules
+    lib: feature-routing-rules
+    routes: [/comm/routing-rules]
+    components: [RoutingRulesPageComponent, RoutingRuleDialogComponent]
+    permission: comm.roteamento.ler
+  - name: messages
+    lib: feature-messages
+    routes: [/comm/messages, /comm/messages/:id]
+    components: [MessagesListPageComponent, MessageDetailPageComponent, DispatchDialogComponent, DeliveryTimelineComponent]
+    permission: comm.mensagem.ler
+  - name: channel-config
+    lib: feature-channel-config
+    routes: [/comm/channels]
+    components: [ChannelConfigPageComponent, ChannelConfigDialogComponent]
+    permission: comm.canal.ler
+
+data_access:
+  - resource: Template
+    base_path: /api/v1/templates
+    service: TemplateApiService
+    facade: TemplateCatalogFacade
+    operations: [list, get, create, update, activate, archive]
+  - resource: Studio
+    base_path: /api/v1/templates/:id/studio/compose
+    service: StudioApiService
+    facade: TemplateStudioFacade
+    operations: [compose]
+  - resource: RoutingRule
+    base_path: /api/v1/routing-rules
+    service: RoutingApiService
+    facade: RoutingFacade
+    operations: [list, get, create, update]
+  - resource: Message
+    base_path: /api/v1/messages
+    service: MessageApiService
+    facade: MessageFacade
+    operations: [dispatch, get, list, listEvents]
+  - resource: Channel
+    base_path: /api/v1/channels
+    service: ChannelApiService
+    facade: ChannelFacade
+    operations: [list, create, update]
+
+backend_contract: ../../../../backend/services/comm-service/contracts/api-contract.md
+
+ui_libs_used:
+  - "@journeyos/shared/ui-tokens"
+  - "@journeyos/shared/ui-components"
+  - "@journeyos/shared/ui-feedback"
+
+access_libs_used:
+  - "@journeyos/shared/auth-session"
+  - "@journeyos/shared/empresa-context"
+  - "@journeyos/shared/access-decision"
+  - "@journeyos/shared/access-http-base"
+  - "@journeyos/shared/error-model"
+
+optional_libs:
+  - "@journeyos/shared/observability"
+
+extra_dependencies: []
+
+module_contract:
+  key: comm
+  label: Comunicação
+  icon: forum
+  permissions:
+    - comm.template.ler
+    - comm.template.criar
+    - comm.template.editar
+    - comm.template.publicar
+    - comm.template.arquivar
+    - comm.studio.compor
+    - comm.mensagem.enviar
+    - comm.mensagem.ler
+    - comm.roteamento.criar
+    - comm.roteamento.editar
+    - comm.roteamento.ler
+    - comm.canal.configurar
+    - comm.canal.ler
+  feature_flags:
+    - { key: comm.template-studio, defaultState: enabled }
+    - { key: comm.delivery-tracking, defaultState: enabled }
+
+e2e:
+  features_path: docs/architecture/frontend/modules/comm/frontend/e2e/
+  features:
+    - message-dispatch-tracking.feature
+    - dispatch-idempotency.feature
+    - template-authoring-and-activation.feature
+    - template-studio-degradation.feature
+    - routing-resolution.feature
+    - channel-config-security.feature
+    - empresa-switch-isolation.feature
+    - entitlement-denied.feature
+    - deep-link.feature
